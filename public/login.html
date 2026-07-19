@@ -7,7 +7,6 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script>
-        // অলরেডি লগইন থাকলে গেম ড্যাশবোর্ডে রিডাইরেক্ট করবে
         if (localStorage.getItem('blockbuster_user')) {
             window.location.href = '/';
         }
@@ -20,7 +19,6 @@
             <h1 class="text-4xl font-black text-yellow-300 tracking-wide drop-shadow-[0_5px_5px_rgba(0,0,0,0.5)]">BLOCK BUSTER</h1>
         </div>
 
-        <!-- Login Form Card -->
         <div class="w-full bg-black/40 backdrop-blur-md rounded-3xl p-6 text-center space-y-4">
             <h2 class="text-lg font-bold"><i class="fa-solid fa-user-lock mr-2 text-yellow-300"></i>Account Login</h2>
             
@@ -38,6 +36,24 @@
     </div>
 
     <script>
+        function showError(data) {
+            if (!data) return alert("ত্রুটি ঘটেছে। আবার চেষ্টা করুন।");
+            if (typeof data.detail === 'string') {
+                return alert(data.detail);
+            }
+            if (Array.isArray(data.detail)) {
+                const msgs = data.detail.map(err => {
+                    const field = err.loc[err.loc.length - 1];
+                    return `${field}: ${err.msg}`;
+                });
+                return alert("ভ্যালিডেশন ত্রুটি:\n" + msgs.join("\n"));
+            }
+            if (data.error) {
+                return alert(data.error);
+            }
+            alert(JSON.stringify(data));
+        }
+
         async function submitLogin() {
             const email = document.getElementById('login-email').value;
             const password = document.getElementById('login-password').value;
@@ -57,7 +73,7 @@
                 localStorage.setItem('blockbuster_user', JSON.stringify(data.user));
                 window.location.href = '/';
             } else {
-                alert(data.detail || "লগইন ব্যর্থ হয়েছে। সঠিক তথ্য দিন।");
+                showError(data);
             }
         }
     </script>
