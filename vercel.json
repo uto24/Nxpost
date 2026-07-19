@@ -1,6 +1,5 @@
 {
   "version": 2,
-  "cleanUrls": true,
   "builds": [
     { "src": "api/*.py", "use": "@vercel/python" },
     { "src": "public/**", "use": "@vercel/static" }
@@ -17,13 +16,5 @@
     { "src": "/verify", "dest": "public/verify.html" },
     { "src": "/game", "dest": "public/game.html" },
     { "src": "/(.*)", "dest": "public/$1" }
-  ],
-  "headers": [
-    {
-      "source": "/(.*)",
-      "headers": [
-        { "key": "Cache-Control", "value": "no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0" }
-      ]
-    }
   ]
 }
