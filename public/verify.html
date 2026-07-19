@@ -4,9 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Block Buster - Verify Email</title>
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script>
+        // সাময়িক সাইন-আপ ডাটা না থাকলে রিডাইরেক্ট করবে
         if (!sessionStorage.getItem('temp_signup')) {
             window.location.href = '/signup';
         }
@@ -19,11 +22,12 @@
             <h1 class="text-4xl font-black text-yellow-300 tracking-wide drop-shadow-[0_5px_5px_rgba(0,0,0,0.5)]">BLOCK BUSTER</h1>
         </div>
 
+        <!-- Verification Card -->
         <div class="w-full bg-black/40 backdrop-blur-md rounded-3xl p-6 text-center space-y-4">
             <h2 class="text-lg font-bold"><i class="fa-solid fa-envelope-open-text mr-2 text-yellow-300"></i>Email Verification</h2>
-            <p class="text-xs text-green-300">আপনার জিমেলে একটি ৬-ডিজিটের ওটিপি কোড পাঠানো হয়েছে। সেটি নিচে লিখুন:</p>
+            <p class="text-xs text-green-300">আপনার জিমেইলে একটি ৬-ডিজিটের ওটিপি কোড পাঠানো হয়েছে। সেটি নিচে লিখুন:</p>
             
-            <input id="signup-otp" type="text" placeholder="Enter 6-Digit OTP" class="w-full p-3 rounded-2xl bg-white/10 text-white placeholder-gray-300 border border-white/20 text-center text-lg tracking-widest focus:outline-none">
+            <input id="signup-otp" type="text" placeholder="Enter 6-Digit OTP" class="w-full p-3 rounded-2xl bg-white/10 text-white placeholder-gray-300 border border-white/20 text-center text-lg tracking-widest focus:outline-none focus:ring-2 focus:ring-green-400">
             
             <button onclick="verifyAndRegister()" class="w-full bg-[#4CAF50] hover:bg-green-600 py-3 rounded-full text-white font-extrabold text-lg shadow-lg border-b-4 border-green-700">
                 <i class="fa-solid fa-circle-check mr-2"></i> Verify & Register
@@ -34,6 +38,7 @@
     </div>
 
     <script>
+        // জটিল এরর ডিকোড করে বাংলায় দেখানোর হেল্পার ফাংশন
         function showError(data) {
             if (!data) return alert("ত্রুটি ঘটেছে। আবার চেষ্টা করুন।");
             if (typeof data.detail === 'string') {
@@ -82,9 +87,9 @@
             const data = await response.json();
             if (response.ok) {
                 alert("নিবন্ধন সফল হয়েছে!");
-                sessionStorage.removeItem('temp_signup');
-                localStorage.setItem('blockbuster_user', JSON.stringify(data.user));
-                window.location.href = '/';
+                sessionStorage.removeItem('temp_signup'); // সাময়িক সেশন ক্লিন
+                localStorage.setItem('blockbuster_user', JSON.stringify(data.user)); // মেইন সেশন সেভ
+                window.location.href = '/'; // গেম ড্যাশবোর্ডে প্রবেশ
             } else {
                 showError(data);
             }
