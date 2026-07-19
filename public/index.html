@@ -3,160 +3,68 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Block Buster - Dashboard</title>
+    <title>Block Buster - Game Play</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- FontAwesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- PWA Manifest Link -->
-    <link rel="manifest" href="/manifest.json">
+    <!-- Phaser.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/phaser/3.60.0/phaser.min.js"></script>
     <script>
+        // সেশন চেক গার্ড
         if (!localStorage.getItem('blockbuster_user')) {
             window.location.href = '/login';
         }
-    </script>
-    <!-- PWA Global Service Worker Registration -->
-    <script>
-        if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('/sw.js')
-                .then(() => console.log("PWA Service Worker Registered!"))
-                .catch(err => console.log("SW Registration failed: ", err));
-        }
+        var currentUser = JSON.parse(localStorage.getItem('blockbuster_user'));
     </script>
 </head>
 <body class="bg-gray-950 font-sans min-h-screen flex justify-center text-white overflow-hidden">
 
-    <!-- dynamic viewport height (h-[100dvh]) ব্যবহার করে সম্পূর্ণ স্ক্রিন ফিট করা হয়েছে -->
-    <div class="w-full max-w-md bg-[#1B5E20] h-[100dvh] flex flex-col justify-between relative overflow-hidden shadow-2xl">
+    <!-- dynamic viewport height (h-[100dvh]) ব্যবহার করে গেম বোর্ড ফিট করা হয়েছে -->
+    <div class="w-full max-w-md bg-[#1B5E20] h-[100dvh] flex flex-col justify-between p-4 relative overflow-hidden shadow-2xl">
         
-        <!-- Header -->
-        <header class="p-4 flex justify-between items-center bg-[#1B5E20] border-b border-green-800 shrink-0">
-            <div class="flex items-center space-x-3">
-                <img id="user-avatar" class="w-12 h-12 rounded-full border-2 border-green-400" src="https://i.ibb.co/default-avatar.png">
-                <div>
-                    <h3 id="header-username" class="font-extrabold text-sm">User...</h3>
-                    <div class="flex items-center space-x-1 mt-1">
-                        <span class="bg-pink-600 text-[10px] px-2 py-0.5 rounded font-bold">♀️ 20</span>
-                        <span class="text-xs text-gray-300">Bangladesh</span>
-                    </div>
+        <!-- Game Page Header -->
+        <header class="flex justify-between items-center bg-[#1B5E20] p-2 shrink-0 border-b border-green-800">
+            <!-- Back to Dashboard Button -->
+            <a href="/" class="text-white text-xl hover:scale-110 transition"><i class="fa-solid fa-arrow-left"></i></a>
+            
+            <div class="flex items-center space-x-2">
+                <div class="bg-yellow-600/50 px-3 py-1 rounded-full text-xs font-extrabold flex items-center space-x-1">
+                    <i class="fa-solid fa-coins text-yellow-400"></i> <span id="coin-balance-game">0</span>
                 </div>
             </div>
-            <button onclick="handleLogout()" class="bg-red-600/30 hover:bg-red-600/50 text-red-300 text-xs px-3 py-1.5 rounded-xl font-bold"><i class="fa-solid fa-right-from-bracket mr-1"></i> Log Out</button>
         </header>
 
-        <!-- Main Dashboard View (Scrollable middle only) -->
-        <main class="flex-grow overflow-y-auto p-4 space-y-4">
-            
-            <!-- Dashboard View -->
-            <div id="home-tab" class="space-y-4">
-                <!-- My Wallet -->
-                <div class="bg-black/30 p-4 rounded-3xl border border-green-800">
-                    <h4 class="text-xs text-gray-400 font-bold mb-3"><i class="fa-solid fa-wallet mr-1 text-green-400"></i> My wallet</h4>
-                    <div class="grid grid-cols-2 gap-3">
-                        <div onclick="switchTab('gems')" class="bg-green-900/40 p-3 rounded-2xl border border-green-500/20 text-center cursor-pointer hover:bg-green-900/60">
-                            <i class="fa-solid fa-gem text-green-400 text-2xl"></i>
-                            <div class="font-black text-lg mt-1" id="coin-gem">0</div>
-                            <div class="text-[10px] text-gray-400">=$0.00</div>
-                        </div>
-                        <div class="bg-yellow-900/40 p-3 rounded-2xl border border-yellow-500/20 text-center">
-                            <i class="fa-solid fa-coins text-yellow-400 text-2xl"></i>
-                            <div class="font-black text-lg mt-1" id="coin-balance">0</div>
-                            <div class="text-[10px] text-gray-400" id="coin-usd">=$0.00</div>
-                        </div>
-                    </div>
-                </div>
+        <!-- Main Game Area -->
+        <div class="flex-grow flex flex-col justify-center py-2">
+            <div class="flex justify-between items-center text-xs bg-black/20 p-2 rounded-xl mb-3">
+                <div>🏆 High Score: <span id="high-score">0</span></div>
+                
+                <button onclick="triggerGameHint()" class="bg-yellow-500 hover:bg-yellow-600 text-black px-3 py-1 rounded-full font-extrabold text-[11px] shadow flex items-center space-x-1">
+                    <i class="fa-solid fa-lightbulb"></i> <span>Get Hint</span>
+                </button>
 
-                <!-- PLAY GAME BUTTON -->
-                <a href="/game" class="block w-full bg-gradient-to-r from-yellow-500 to-green-500 hover:from-yellow-600 hover:to-green-600 text-center py-5 rounded-3xl font-black text-2xl text-white shadow-2xl border-b-4 border-green-800 transform active:scale-95 transition-transform duration-100">
-                    <i class="fa-solid fa-gamepad mr-2 animate-bounce"></i> PLAY GAME 🎮
-                </a>
-
-                <!-- Help Center Section -->
-                <div class="divide-y divide-green-900/50 bg-black/20 rounded-2xl border border-green-900/50">
-                    <div class="p-4 flex justify-between items-center cursor-pointer hover:bg-white/5"><span class="text-sm font-medium">Recharge</span><i class="fa-solid fa-chevron-right text-xs text-gray-400"></i></div>
-                    <div class="p-4 flex justify-between items-center cursor-pointer hover:bg-white/5"><span class="text-sm font-medium">Withdraw</span><i class="fa-solid fa-chevron-right text-xs text-gray-400"></i></div>
-                    <div onclick="openSettings()" class="p-4 flex justify-between items-center cursor-pointer hover:bg-white/5"><span class="text-sm font-medium">Settings</span><i class="fa-solid fa-chevron-right text-xs text-gray-400"></i></div>
-                </div>
+                <div class="text-right text-yellow-300">⭐ Score: <span id="current-score">0</span></div>
             </div>
 
-            <!-- Referrals Tab -->
-            <div id="referrals-tab" class="hidden space-y-4">
-                <div class="flex justify-between items-center">
-                    <h2 class="text-xl font-black">Referral System</h2>
-                    <button onclick="openRulesModal()" class="bg-green-700 px-3 py-1 text-xs rounded-full border border-green-500"><i class="fa-solid fa-circle-info mr-1"></i> Rules</button>
-                </div>
-                <div class="bg-blue-600/30 p-4 rounded-3xl border border-blue-500/50 text-center">
-                    <h3 class="text-lg font-black text-yellow-300">SHARE AND EARN</h3>
-                    <p class="text-xs text-white/80 mt-1">Friend signs up = <span class="font-bold text-green-400">+10,000 💎</span></p>
-                </div>
-                <div class="bg-black/30 p-3 rounded-2xl flex items-center justify-between border border-green-800">
-                    <input id="referral-link" type="text" readonly class="bg-transparent text-xs text-gray-300 focus:outline-none w-3/4" value="">
-                    <button onclick="copyRefLink()" class="bg-yellow-500 text-black text-xs font-bold px-4 py-2 rounded-xl"><i class="fa-solid fa-copy mr-1"></i> Copy</button>
-                </div>
-                <div class="bg-black/20 p-3 rounded-2xl">
-                    <h4 class="text-sm font-bold mb-2">My Referrals</h4>
-                    <div id="ref-list-container" class="space-y-2"></div>
-                </div>
-            </div>
-
-            <!-- Gems Tab -->
-            <div id="gems-tab" class="hidden space-y-4">
-                <div class="bg-gradient-to-r from-green-700 to-green-600 p-6 rounded-3xl text-center shadow-inner">
-                    <i class="fa-solid fa-gem text-5xl text-green-200"></i>
-                    <h3 class="text-2xl font-black mt-2" id="wallet-gem">0</h3>
-                    <p class="text-xs text-gray-200">Available Gems</p>
-                </div>
-                <h4 class="font-bold text-sm">How to use <i class="fa-solid fa-gem text-green-400"></i></h4>
-                <div class="bg-white/5 p-3 rounded-2xl flex justify-between items-center border border-white/10">
-                    <div>
-                        <div class="text-sm font-bold">Exchange to Coins</div>
-                        <div class="text-xs text-gray-400">Convert Gems to Play Coins</div>
-                    </div>
-                    <button class="bg-yellow-500 text-black text-xs font-bold px-3 py-1.5 rounded-full">Exchange</button>
-                </div>
-            </div>
-        </main>
-
-        <!-- ================= SETTINGS OVERLAY ================= -->
-        <div id="settings-modal" class="hidden absolute inset-0 bg-black/70 z-50 flex items-center justify-center p-6">
-            <div class="bg-[#F1F8E9] text-gray-800 w-full max-w-sm rounded-3xl p-6 relative shadow-2xl border-4 border-green-600">
-                <button onclick="closeSettings()" class="absolute -top-3 -right-3 w-10 h-10 bg-red-500 border-2 border-white text-white rounded-full font-bold">X</button>
-                <h3 class="text-xl font-black text-center text-green-800 mb-6">Settings</h3>
-                <div class="space-y-4">
-                    <div>
-                        <label class="block text-xs font-bold text-gray-600 mb-1">Sound Effects</label>
-                        <input type="range" class="w-full accent-green-600" min="0" max="100">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-bold text-gray-600 mb-1">BGM (Music)</label>
-                        <input type="range" class="w-full accent-green-600" min="0" max="100">
-                    </div>
-                </div>
-            </div>
+            <!-- Phaser Canvas Game Container -->
+            <div id="block-game-container" class="mx-auto border-4 border-green-900 rounded-2xl overflow-hidden bg-[#0c3c14]"></div>
         </div>
 
-        <!-- ================= RULES MODAL ================= -->
-        <div id="rules-modal" class="hidden absolute inset-0 bg-black/80 z-50 flex items-center justify-center p-6">
-            <div class="bg-gray-950 text-white w-full max-w-sm rounded-3xl p-6 relative border border-green-800">
-                <button onclick="closeRulesModal()" class="absolute top-4 right-4 text-gray-400 hover:text-white">✕</button>
-                <h3 class="text-lg font-black text-yellow-300 mb-4">Referral Rules</h3>
-                <ul class="space-y-4 text-xs text-gray-300 list-disc pl-4">
-                    <li><strong>Gems Award:</strong> Rewards are calculated strictly 12 hours after verification criteria are met.</li>
-                    <li><strong>Anti-Abuse Check:</strong> One device cannot have multiple accounts.</li>
-                    <li><strong>Activity Standard:</strong> Referred friends must remain active for 10 out of the 12 hours monitoring window.</li>
-                </ul>
-            </div>
-        </div>
-
-        <!-- ================= BOTTOM NAVIGATION ================= -->
-        <nav id="app-nav" class="absolute bottom-0 left-0 right-0 bg-[#0d3b13] border-t border-green-900 h-16 flex justify-around items-center shrink-0">
-            <button onclick="switchTab('home')" class="flex flex-col items-center text-yellow-400"><span class="text-xl"><i class="fa-solid fa-house"></i></span><span class="text-[10px] font-bold mt-1">Home</span></button>
-            <button onclick="switchTab('referrals')" class="flex flex-col items-center text-gray-400 hover:text-white"><span class="text-xl"><i class="fa-solid fa-user-plus"></i></span><span class="text-[10px] mt-1">Referral</span></button>
-            <button onclick="switchTab('gems')" class="flex flex-col items-center text-gray-400 hover:text-white"><span class="text-xl"><i class="fa-solid fa-wallet"></i></span><span class="text-[10px] mt-1">My Gems</span></button>
-        </nav>
-
+        <p class="text-[10px] text-green-200 text-center mb-2">ফলের ওপর ট্যাপ করে পাশাপাশি বা উপর-নিচ সোয়াপ (Swap) করে ৩টি মিলান! প্রতিটি ম্যাচে আপনার ওয়ালেটে কয়েন যুক্ত হবে।</p>
     </div>
 
-    <script src="app.js"></script>
+    <script>
+        // ডোমেইনে কয়েন আপডেট করার হেল্পার
+        document.getElementById('coin-balance-game').innerText = currentUser.coin_balance || 0;
+
+        window.triggerGameHint = () => {
+            if (window.fruitMatchGame) {
+                const scene = window.fruitMatchGame.scene.keys['GameScene'];
+                if (scene) scene.showMoveHint();
+            }
+        };
+    </script>
+    <script src="game.js"></script>
 </body>
 </html>
