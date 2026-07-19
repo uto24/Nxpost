@@ -68,7 +68,7 @@ def send_via_brevo(recipient: str, otp: str) -> bool:
 
 def send_via_resend(recipient: str, otp: str) -> bool:
     msg = MIMEMultipart()
-    msg['From'] = '"Block Buster Support" <onboarding@resend.dev>'
+    msg['From'] = '"Block Buster Support" <rakib03x@gmail.com>'
     msg['To'] = recipient
     msg['Subject'] = 'Your Block Buster OTP Verification Code'
     html = f"""
