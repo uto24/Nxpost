@@ -44,7 +44,7 @@ def hash_password(password: str) -> str:
 # ================= SMTP OTP EMAILING =================
 def send_via_brevo(recipient: str, otp: str) -> bool:
     msg = MIMEMultipart()
-    msg['From'] = '"Block Buster Support" <b28253001@smtp-brevo.com>'
+    msg['From'] = '"Block Buster Spport" <rakib03x@gmail.com>'
     msg['To'] = recipient
     msg['Subject'] = 'Your Block Buster OTP Verification Code'
     html = f"""
