@@ -2,7 +2,7 @@ import os
 import re
 import random
 import hashlib
-import requests  # SMTP লাইব্রেরির পরিবর্তে দ্রুত কাজ করার জন্য যুক্ত করা হয়েছে
+import requests
 from datetime import datetime, timezone
 
 from fastapi import FastAPI, HTTPException
@@ -33,6 +33,7 @@ class SignupRequest(BaseModel):
     referrer_id: int = None
     otp_code: str = None
 
+# ================= নিরাপদ পাসওয়ার্ড হ্যাশিং =================
 def hash_password(password: str) -> str:
     salt = "BLOCK_BUSTER_SALT_2026"
     return hashlib.sha256((password + salt).encode()).hexdigest()
@@ -40,9 +41,14 @@ def hash_password(password: str) -> str:
 # ================= ১০০% ফাস্ট ও সিকিউর BREVO HTTP API =================
 def send_via_brevo_api(recipient: str, otp: str) -> bool:
     url = "https://api.brevo.com/v3/smtp/email"
+    
+    # Vercel-এর Environment Variable থেকে কি রিড করবে, না থাকলে ড্যাশবোর্ডের নতুন API v3 Key ব্যবহার করবে
+    # দয়া করে Vercel Settings-এ BREVO_API_KEY নামের ভেরিয়েবলে আপনার নতুন 'xkeysib-...' কী-টি পেস্ট করে দিন
+    api_key = os.environ.get("BREVO_API_KEY", "xsmtpsib-353d161fe87c9a2398286c939abd2d88eded89aa076c0b476a489151d2928745-r81KzrWee8rBANwz")
+    
     headers = {
         "accept": "application/json",
-        "api-key": "xsmtpsib-353d161fe87c9a2398286c939abd2d88eded89aa076c0b476a489151d2928745-r81KzrWee8rBANwz",
+        "api-key": api_key,
         "content-type": "application/json"
     }
     payload = {
@@ -72,8 +78,11 @@ def send_via_brevo_api(recipient: str, otp: str) -> bool:
 # ================= ১০০% ফাস্ট ও সিকিউর RESEND HTTP API =================
 def send_via_resend_api(recipient: str, otp: str) -> bool:
     url = "https://api.resend.com/emails"
+    
+    resend_key = os.environ.get("RESEND_API_KEY", "re_3t1FPYUa_5kzAJGgftdZx8MkEaXvUsYAP")
+    
     headers = {
-        "Authorization": "Bearer re_3t1FPYUa_5kzAJGgftdZx8MkEaXvUsYAP",
+        "Authorization": f"Bearer {resend_key}",
         "Content-Type": "application/json"
     }
     payload = {
@@ -127,13 +136,10 @@ def signup_api(req: SignupRequest):
         sent = False
         provider_used = ""
         
-        # প্রথমে Brevo API দিয়ে ট্রাই করা হচ্ছে (এটি যেকোনো জিমেইলে ওটিপি সেন্ড করতে পারবে)
         if b_count < 290:
             if send_via_brevo_api(req.email, otp):
                 sent, provider_used = True, "Brevo"
         
-        # Brevo শেষ হয়ে গেলে বা ফেইল করলে Resend API দিয়ে ট্রাই করা হবে
-        # (মনে রাখবেন: Resend-এর onboarding@resend.dev দিয়ে শুধুমাত্র আপনার নিজের Resend রেজিস্ট্রেশন করা ইমেইলেই ওটিপি যাবে)
         if not sent and r_count < 98:
             if send_via_resend_api(req.email, otp):
                 sent, provider_used = True, "Resend"
