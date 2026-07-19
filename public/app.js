@@ -49,30 +49,9 @@ function showPWAInstallPrompt() {
     }
 }
 
-// HTML থেকে Phaser গেমের ভেতর সংকেত (Hint) পাঠানোর গ্লোবাল ফাংশন
-window.triggerGameHint = () => {
-    if (window.fruitMatchGame) {
-        const scene = window.fruitMatchGame.scene.keys['GameScene'];
-        if (scene) {
-            scene.showMoveHint();
-        }
-    }
-};
-
 function enterApp() {
-    const header = document.getElementById('app-header');
-    const nav = document.getElementById('app-nav');
-    
-    if (header) header.classList.remove('hidden');
-    if (nav) nav.classList.remove('hidden');
-    
     updateUIBalances();
-    switchTab('game');
-    
-    if (window.fruitMatchGame) {
-        window.fruitMatchGame.scene.keys['GameScene'].scene.restart();
-    }
-    
+    switchTab('home');
     startHeartbeatTimer();
 }
 
@@ -80,14 +59,12 @@ function updateUIBalances() {
     if (!currentUser) return;
     
     document.getElementById('coin-balance').innerText = currentUser.coin_balance || 0;
-    document.getElementById('gem-balance').innerText = currentUser.diamond_balance || 0;
+    document.getElementById('coin-gem').innerText = currentUser.diamond_balance || 0;
     
-    document.getElementById('drawer-username').innerText = currentUser.nickname;
     document.getElementById('header-username').innerText = currentUser.nickname;
-    document.getElementById('drawer-coin').innerText = currentUser.coin_balance || 0;
-    document.getElementById('drawer-gem').innerText = currentUser.diamond_balance || 0;
     document.getElementById('wallet-gem').innerText = currentUser.diamond_balance || 0;
     
+    // কয়েন কনভার্সন (৬৭৭,৪০০ কয়েন = $১.০০)
     const coinUSD = ((currentUser.coin_balance || 0) / 677400).toFixed(2);
     document.getElementById('coin-usd').innerText = `=$${coinUSD}`;
     
@@ -95,29 +72,17 @@ function updateUIBalances() {
 }
 
 function switchTab(tabName) {
-    document.getElementById('game-tab').classList.add('hidden');
+    document.getElementById('home-tab').classList.add('hidden');
     document.getElementById('referrals-tab').classList.add('hidden');
     document.getElementById('gems-tab').classList.add('hidden');
 
-    if (tabName === 'game') {
-        document.getElementById('game-tab').classList.remove('hidden');
+    if (tabName === 'home') {
+        document.getElementById('home-tab').classList.remove('hidden');
     } else if (tabName === 'referrals') {
         document.getElementById('referrals-tab').classList.remove('hidden');
         loadReferralData();
     } else if (tabName === 'gems') {
         document.getElementById('gems-tab').classList.remove('hidden');
-    }
-}
-
-function toggleDrawer(open) {
-    const drawer = document.getElementById('profile-drawer');
-    const overlay = document.getElementById('drawer-overlay');
-    if (open) {
-        drawer.classList.remove('-translate-x-full');
-        overlay.classList.remove('hidden');
-    } else {
-        drawer.classList.add('-translate-x-full');
-        overlay.classList.add('hidden');
     }
 }
 
@@ -131,13 +96,6 @@ function openSettings() { document.getElementById('settings-modal').classList.re
 function closeSettings() { document.getElementById('settings-modal').classList.add('hidden'); }
 function openRulesModal() { document.getElementById('rules-modal').classList.remove('hidden'); }
 function closeRulesModal() { document.getElementById('rules-modal').classList.add('hidden'); }
-
-function restartGame() {
-    if (window.fruitMatchGame) {
-        window.fruitMatchGame.scene.keys['GameScene'].scene.restart();
-    }
-    closeSettings();
-}
 
 function copyRefLink() {
     const linkInput = document.getElementById('referral-link');
