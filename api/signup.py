@@ -60,7 +60,7 @@ def send_via_brevo(recipient: str, otp: str) -> bool:
         with smtplib.SMTP('smtp-relay.brevo.com', 587) as server:
             server.starttls()
             server.login('b28253001@smtp-brevo.com', 'xsmtpsib-353d161fe87c9a2398286c939abd2d88eded89aa076c0b476a489151d2928745-r81KzrWee8rBANwz')
-            server.sendmail('b28253001@smtp-brevo.com', recipient, msg.as_string())
+            server.sendmail('rakib03x@gmail.com', recipient, msg.as_string())
         return True
     except Exception as e:
         print(f"Brevo SMTP Error: {e}")
