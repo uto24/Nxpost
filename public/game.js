@@ -94,7 +94,7 @@ class GameScene extends Phaser.Scene {
             if (this.isDragging && this.activeDragTile && !this.isProcessing) {
                 const dx = pointer.x - this.dragStartX;
                 const dy = pointer.y - this.dragStartY;
-                const threshold = 18; // সোয়াইপ ডিটেকশন ট্রিগার লিমিট (পিক্সেল)
+                const threshold = 30; // সোয়াইপ লিমিট ৩০ পিক্সেল করা হয়েছে (যাতে সাধারণ ক্লিকে সোয়াইপ ট্রিগার না হয়)
                 
                 if (Math.abs(dx) > threshold || Math.abs(dy) > threshold) {
                     this.isDragging = false; // একাধিক সোয়াইপ প্রতিরোধে ড্র্যাগিং অফ
@@ -104,21 +104,19 @@ class GameScene extends Phaser.Scene {
                     let targetRow = r;
                     let targetCol = c;
                     
-                    // সোয়াইপ কোন অভিমুখে হচ্ছে তা নির্ণয়
+                    // সোয়াইপ অভিমুখে টার্গেট গ্রিড নির্ণয়
                     if (Math.abs(dx) > Math.abs(dy)) {
                         targetCol = dx > 0 ? c + 1 : c - 1;
                     } else {
                         targetRow = dy > 0 ? r + 1 : r - 1;
                     }
                     
-                    // টার্গেট গ্রিড ভ্যালিড হলে সোয়াপ ট্র্যাকার কল করা
                     if (targetRow >= 0 && targetRow < this.gridSize && targetCol >= 0 && targetCol < this.gridSize) {
                         const targetTile = this.grid[targetRow][targetCol];
                         if (targetTile) {
-                            // সিলেকশন বর্ডার রিসেট করা
                             this.activeDragTile.getData('bg').setStrokeStyle(2, 0x33691e);
                             this.selectedTile = null;
-                            this.comboCount = 0; // ইউজার ম্যানুয়ালি সোয়াপ করলে কম্বো কাউন্ট রিসেট
+                            this.comboCount = 0; // কম্বো রিসেট
                             this.swapTiles(this.activeDragTile, targetTile, true);
                         }
                     }
@@ -142,7 +140,7 @@ class GameScene extends Phaser.Scene {
 
             const dist = Math.abs(tile1.getData('row') - tile2.getData('row')) + Math.abs(tile1.getData('col') - tile2.getData('col'));
             if (dist === 1) {
-                this.comboCount = 0; // ম্যানুয়াল ক্লিক সোয়াপে কম্বো রিসেট
+                this.comboCount = 0; // ক্লিক সোয়াপে কম্বো রিসেট
                 this.swapTiles(tile1, tile2, true);
             }
         }
@@ -161,23 +159,28 @@ class GameScene extends Phaser.Scene {
         tile1.setData('row', r2).setData('col', c2);
         tile2.setData('row', r1).setData('col', c1);
 
+        // মসৃণ স্লাইড সোয়াপিং অ্যানিমেশন
         this.tweens.add({
             targets: tile1,
             x: this.gridOffset.x + c2 * this.tileSize + this.tileSize / 2,
             y: this.gridOffset.y + r2 * this.tileSize + this.tileSize / 2,
-            duration: 200
+            ease: 'Quad.easeInOut',
+            duration: 220
         });
 
         this.tweens.add({
             targets: tile2,
             x: this.gridOffset.x + c1 * this.tileSize + this.tileSize / 2,
             y: this.gridOffset.y + r1 * this.tileSize + this.tileSize / 2,
-            duration: 200,
+            ease: 'Quad.easeInOut',
+            duration: 220,
             onComplete: () => {
                 if (checkMatch) {
                     const matched = this.checkAndClearMatches();
                     if (!matched) {
-                        this.swapTiles(tile1, tile2, false); // ম্যাচ না হলে রিভার্স সোয়াপ
+                        // ম্যাচ না হলে লাল "No Match!" পপ-আপ সহ রিভার্স সোয়াপ
+                        this.spawnFloatingText((tile1.x + tile2.x) / 2, (tile1.y + tile2.y) / 2, "❌ No Match!", '#FF3D00');
+                        this.swapTiles(tile1, tile2, false);
                     } else {
                         this.isProcessing = false;
                     }
@@ -228,7 +231,6 @@ class GameScene extends Phaser.Scene {
             let listToDestroy = Array.from(matches);
             let animationCount = 0;
 
-            // ক্রাশ সেন্টারের পজিশন নির্ণয় (পপ-আপ টেক্সট দেখানোর জন্য)
             let avgX = 0, avgY = 0;
             listToDestroy.forEach(t => { avgX += t.x; avgY += t.y; });
             avgX /= listToDestroy.length;
@@ -239,10 +241,11 @@ class GameScene extends Phaser.Scene {
                 const c = tile.getData('col');
                 this.grid[r][c] = null;
 
-                // পিন এবং স্পিন বিস্ফোরিত অ্যানিমেশন (Advanced Explode effect)
+                // পিন এবং স্পিন বিস্ফোরিত অ্যানিমেশন
                 this.tweens.add({
                     targets: tile,
-                    scale: 0,
+                    scaleX: 0,
+                    scaleY: 0,
                     angle: 180, // ১৮০ ডিগ্রি ঘোরে সংকুচিত হবে
                     alpha: 0,
                     duration: 250,
@@ -283,7 +286,6 @@ class GameScene extends Phaser.Scene {
         return false;
     }
 
-    // ওটিপি বা কয়েন পপ-আপ অ্যানিমেশন মেথড
     spawnFloatingText(x, y, text, color) {
         const popup = this.add.text(x, y, text, {
             fontSize: '18px',
@@ -364,15 +366,14 @@ class GameScene extends Phaser.Scene {
         });
     }
 
-    // গ্রিডে সম্ভাব্য কোনো চাল বাকি আছে কি না তা হিসাব করা
     hasPossibleMoves() {
-        // রো চেকিং (ডানদিকের প্রতিবেশীর সাথে সোয়াপ ট্রাই করা)
+        // রো চেকিং
         for (let r = 0; r < this.gridSize; r++) {
             for (let c = 0; c < this.gridSize - 1; c++) {
                 if (this.checkSwapCreatesMatch(r, c, r, c + 1)) return true;
             }
         }
-        // কলাম চেকিং (নিচের প্রতিবেশীর সাথে সোয়াপ ট্রাই করা)
+        // কলাম চেকিং
         for (let r = 0; r < this.gridSize - 1; r++) {
             for (let c = 0; c < this.gridSize; c++) {
                 if (this.checkSwapCreatesMatch(r, c, r + 1, c)) return true;
@@ -382,7 +383,6 @@ class GameScene extends Phaser.Scene {
     }
 
     checkSwapCreatesMatch(r1, c1, r2, c2) {
-        // ভার্চুয়ালি ডাটাবেজ অদলবদল করা
         const f1 = this.grid[r1][c1].getData('fruit');
         const f2 = this.grid[r2][c2].getData('fruit');
 
@@ -391,7 +391,6 @@ class GameScene extends Phaser.Scene {
 
         let matchFound = false;
 
-        // ভার্চুয়ালি চেক করা
         for (let r = 0; r < this.gridSize; r++) {
             for (let c = 0; c < this.gridSize; c++) {
                 // রো চেক ৩-ম্যাচ
@@ -414,7 +413,6 @@ class GameScene extends Phaser.Scene {
             if (matchFound) break;
         }
 
-        // অরিজিনাল ডাটা আবার ফিরিয়ে দেওয়া
         this.grid[r1][c1].setData('fruit', f1);
         this.grid[r2][c2].setData('fruit', f2);
 
@@ -426,9 +424,7 @@ class GameScene extends Phaser.Scene {
             this.isProcessing = true;
             this.spawnFloatingText(180, 200, "No Moves! Shuffling...", '#FF3D00');
 
-            // ১ সেকেন্ড ডিলে নিয়ে বোর্ড রি-শাফেল করা
             this.time.delayedCall(1000, () => {
-                // আগের সব টাইলস মুছে দেওয়া
                 for (let r = 0; r < this.gridSize; r++) {
                     for (let c = 0; c < this.gridSize; c++) {
                         if (this.grid[r][c]) {
@@ -437,20 +433,18 @@ class GameScene extends Phaser.Scene {
                         }
                     }
                 }
-                // নতুন বোর্ড রেন্ডার করা
                 this.generateBoard();
                 this.isProcessing = false;
             });
         }
     }
 
-    // এপিআই-এর সাহায্য নিয়ে প্রথম সম্ভাব্য চালটি খুঁজে বের করে সংকেত (Hint) দিয়ে বাউন্স করানো
     showMoveHint() {
         if (this.isProcessing) return;
 
         let hintMove = null;
 
-        // রো চেকিং (ডানদিকের প্রতিবেশীর সাথে সোয়াপ ট্রাই)
+        // রো চেকিং
         for (let r = 0; r < this.gridSize; r++) {
             for (let c = 0; c < this.gridSize - 1; c++) {
                 if (this.checkSwapCreatesMatch(r, c, r, c + 1)) {
@@ -461,7 +455,7 @@ class GameScene extends Phaser.Scene {
             if (hintMove) break;
         }
 
-        // কলাম চেকিং (নিচের প্রতিবেশীর সাথে সোয়াপ ট্রাই)
+        // কলাম চেকিং
         if (!hintMove) {
             for (let r = 0; r < this.gridSize - 1; r++) {
                 for (let c = 0; c < this.gridSize; c++) {
@@ -474,7 +468,6 @@ class GameScene extends Phaser.Scene {
             }
         }
 
-        // যদি চাল পাওয়া যায়, তবে সেটিকে সোনারঙে বাউন্স অ্যানিমেশন করিয়ে দেখানো
         if (hintMove) {
             this.isProcessing = true;
             const bg1 = hintMove.t1.getData('bg');
@@ -487,11 +480,11 @@ class GameScene extends Phaser.Scene {
 
             this.tweens.add({
                 targets: [hintMove.t1, hintMove.t2],
-                scaleX: 1.15, // টাইলস সামান্য বড় হবে
+                scaleX: 1.15,
                 scaleY: 1.15,
                 duration: 250,
                 yoyo: true,
-                repeat: 1, // দুইবার ডাবল ফ্ল্যাশ বা বাউন্স করবে
+                repeat: 1,
                 onComplete: () => {
                     hintMove.t1.setScale(1);
                     hintMove.t2.setScale(1);
@@ -515,11 +508,9 @@ class GameScene extends Phaser.Scene {
             });
             const data = await res.json();
             if (res.ok) {
-                // মেইন গেম সেশনের ব্যালেন্স লোকালস্টোরেজ এবং হেডার স্ক্রিনে সিঙ্ক করা
                 currentUser.coin_balance = data.newBalance;
                 localStorage.setItem('blockbuster_user', JSON.stringify(currentUser));
                 
-                // game.html এর মেইন ইউআই ব্যালেন্স লাইভ আপডেট
                 const coinText = document.getElementById('coin-balance-game');
                 if (coinText) {
                     coinText.innerText = data.newBalance;
@@ -531,7 +522,6 @@ class GameScene extends Phaser.Scene {
     }
 }
 
-// গেম কনফিগারেশন (Scale Manager সহ)
 const gameConfig = {
     type: Phaser.AUTO,
     width: 360,
