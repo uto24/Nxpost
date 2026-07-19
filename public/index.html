@@ -24,12 +24,13 @@
         }
     </script>
 </head>
-<body class="bg-gray-950 font-sans min-h-screen flex justify-center text-white">
+<body class="bg-gray-950 font-sans min-h-screen flex justify-center text-white overflow-hidden">
 
-    <div class="w-full max-w-md bg-[#1B5E20] min-h-screen flex flex-col justify-between relative overflow-hidden pb-16">
+    <!-- dynamic viewport height (h-[100dvh]) ব্যবহার করে সম্পূর্ণ স্ক্রিন ফিট করা হয়েছে -->
+    <div class="w-full max-w-md bg-[#1B5E20] h-[100dvh] flex flex-col justify-between relative overflow-hidden shadow-2xl">
         
         <!-- Header -->
-        <header class="p-4 flex justify-between items-center bg-[#1B5E20] border-b border-green-800">
+        <header class="p-4 flex justify-between items-center bg-[#1B5E20] border-b border-green-800 shrink-0">
             <div class="flex items-center space-x-3">
                 <img id="user-avatar" class="w-12 h-12 rounded-full border-2 border-green-400" src="https://i.ibb.co/default-avatar.png">
                 <div>
@@ -43,7 +44,7 @@
             <button onclick="handleLogout()" class="bg-red-600/30 hover:bg-red-600/50 text-red-300 text-xs px-3 py-1.5 rounded-xl font-bold"><i class="fa-solid fa-right-from-bracket mr-1"></i> Log Out</button>
         </header>
 
-        <!-- Main Dashboard View -->
+        <!-- Main Dashboard View (Scrollable middle only) -->
         <main class="flex-grow overflow-y-auto p-4 space-y-4">
             
             <!-- Dashboard View -->
@@ -65,15 +66,10 @@
                     </div>
                 </div>
 
-                <!-- 🎮 BIG PLAY GAME BUTTON -->
+                <!-- PLAY GAME BUTTON -->
                 <a href="/game" class="block w-full bg-gradient-to-r from-yellow-500 to-green-500 hover:from-yellow-600 hover:to-green-600 text-center py-5 rounded-3xl font-black text-2xl text-white shadow-2xl border-b-4 border-green-800 transform active:scale-95 transition-transform duration-100">
                     <i class="fa-solid fa-gamepad mr-2 animate-bounce"></i> PLAY GAME 🎮
                 </a>
-
-                <!-- 📥 PWA Manual Install Button (ডিফল্টভাবে হাইড থাকবে, ব্রাউজার ইনস্টল সাপোর্ট করলে অটো শো হবে) -->
-                <button id="pwa-install-btn" class="hidden w-full bg-blue-600 hover:bg-blue-700 text-center py-4 rounded-3xl font-black text-lg text-white shadow-2xl border-b-4 border-blue-800 transform active:scale-95 transition-transform duration-100 flex items-center justify-center space-x-2">
-                    <i class="fa-solid fa-download animate-bounce mr-2"></i> <span>Download Game App</span>
-                </button>
 
                 <!-- Help Center Section -->
                 <div class="divide-y divide-green-900/50 bg-black/20 rounded-2xl border border-green-900/50">
