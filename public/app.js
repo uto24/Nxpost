@@ -13,6 +13,13 @@ window.onload = () => {
 
 // অ্যাপ প্রবেশ এবং ইনিশিয়াল ফাংশন কল
 function enterApp() {
+    // ক্র্যাশ প্রতিরোধের জন্য 'login-screen' রেফারেন্স সম্পূর্ণ বাদ দেওয়া হয়েছে
+    const header = document.getElementById('app-header');
+    const nav = document.getElementById('app-nav');
+    
+    if (header) header.classList.remove('hidden');
+    if (nav) nav.classList.remove('hidden');
+    
     updateUIBalances();
     switchTab('game');
     
