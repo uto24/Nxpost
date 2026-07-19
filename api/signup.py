@@ -31,7 +31,7 @@ supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
 BREVO_API_KEY = "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"    # এখানে আপনার নতুন 'xkeysib-...' কী-টি বসান
 RESEND_API_KEY = "re_QUfehT2K_LUef2YPJb14rBVAKwwiijFkk"  # এখানে আপনার নতুন 're_...' কী-টি বসান
-SENDER_EMAIL = "rakib03x@gmail.com"               # আপনার ভেরিফাইড Brevo প্রেরক ইমেইল
+SENDER_EMAIL = "noreply@nxpost.online"               # আপনার ভেরিফাইড Brevo প্রেরক ইমেইল
 
 
 # ================= REQUEST MODELS =================
