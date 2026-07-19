@@ -14,8 +14,16 @@ class GameScene extends Phaser.Scene {
         this.grid = [];
         this.selectedTile = null;
         this.isProcessing = false; // ক্যাসকেড চলাকালীন ক্লিকে বাধা দেওয়ার জন্য
+        this.comboCount = 0; // কম্বো ট্র্যাকার
+
+        // সোয়াইপ বা ড্র্যাগ কন্ট্রোল ট্র্যাক করার ভেরিয়েবল
+        this.isDragging = false;
+        this.activeDragTile = null;
+        this.dragStartX = 0;
+        this.dragStartY = 0;
 
         this.generateBoard();
+        this.setupDragEvents();
     }
 
     generateBoard() {
@@ -33,52 +41,108 @@ class GameScene extends Phaser.Scene {
                     randomFruit = Phaser.Math.RND.pick(this.fruits);
                 }
 
-                // টাইল কন্টেইনার এবং ব্যাকগ্রাউন্ড আঁকা
-                const container = this.add.container(x, y);
-                
-                // কন্টেইনারের ইন্টারঅ্যাক্টিভ ব্যাকগ্রাউন্ড রেকট্যাঙ্গেল (Phaser.GameObjects.Rectangle)
-                // এটি ক্লিক ডিটেকশন ১০০% নির্ভুল এবং মোবাইল রেসপন্সিভ করে তোলে
-                const bg = this.add.rectangle(0, 0, this.tileSize - 4, this.tileSize - 4, 0x1b5e20, 0.8);
-                bg.setStrokeStyle(2, 0x33691e);
-
-                const textObj = this.add.text(0, 0, randomFruit, { fontSize: '28px' }).setOrigin(0.5);
-
-                container.add(bg);
-                container.add(textObj);
-
-                container.setData('row', row);
-                container.setData('col', col);
-                container.setData('fruit', randomFruit);
-                container.setData('text', textObj);
-                container.setData('bg', bg);
-
-                // গ্রাফিক্সের পরিবর্তে সরাসরি রেকট্যাঙ্গেলে ক্লিক ইভেন্ট সেট করা হয়েছে
-                bg.setInteractive();
-                this.grid[row][col] = container;
-
-                bg.on('pointerdown', () => this.handleTileSelection(container));
+                this.createTileAt(row, col, x, y, randomFruit);
             }
         }
+
+        // শুরুতে কোনো সম্ভাব্য চাল না থাকলে অটো শাফেল করা
+        this.time.delayedCall(500, () => {
+            this.checkAndReshuffleIfNeeded();
+        });
+    }
+
+    createTileAt(row, col, x, y, fruit) {
+        const container = this.add.container(x, y);
+        
+        const bg = this.add.rectangle(0, 0, this.tileSize - 4, this.tileSize - 4, 0x1b5e20, 0.8);
+        bg.setStrokeStyle(2, 0x33691e);
+
+        const textObj = this.add.text(0, 0, fruit, { fontSize: '28px' }).setOrigin(0.5);
+
+        container.add(bg);
+        container.add(textObj);
+
+        container.setData('row', row);
+        container.setData('col', col);
+        container.setData('fruit', fruit);
+        container.setData('text', textObj);
+        container.setData('bg', bg);
+
+        bg.setInteractive();
+        this.grid[row][col] = container;
+
+        // টাচ ডাউন ইভেন্টে সিলেকশন ও সোয়াইপ ট্র্যাক শুরু
+        bg.on('pointerdown', (pointer) => {
+            if (this.isProcessing) return;
+            this.handleTileSelection(container);
+            
+            this.isDragging = true;
+            this.activeDragTile = container;
+            this.dragStartX = pointer.x;
+            this.dragStartY = pointer.y;
+        });
+    }
+
+    // টেনে ফল সোয়াপ (Drag and Swipe swapping) করার গ্লোবাল ইভেন্ট
+    setupDragEvents() {
+        this.input.on('pointerup', () => {
+            this.isDragging = false;
+            this.activeDragTile = null;
+        });
+
+        this.input.on('pointermove', (pointer) => {
+            if (this.isDragging && this.activeDragTile && !this.isProcessing) {
+                const dx = pointer.x - this.dragStartX;
+                const dy = pointer.y - this.dragStartY;
+                const threshold = 18; // সোয়াইপ ডিটেকশন ট্রিগার লিমিট (পিক্সেল)
+                
+                if (Math.abs(dx) > threshold || Math.abs(dy) > threshold) {
+                    this.isDragging = false; // একাধিক সোয়াইপ প্রতিরোধে ড্র্যাগিং অফ
+                    
+                    const r = this.activeDragTile.getData('row');
+                    const c = this.activeDragTile.getData('col');
+                    let targetRow = r;
+                    let targetCol = c;
+                    
+                    // সোয়াইপ কোন অভিমুখে হচ্ছে তা নির্ণয়
+                    if (Math.abs(dx) > Math.abs(dy)) {
+                        targetCol = dx > 0 ? c + 1 : c - 1;
+                    } else {
+                        targetRow = dy > 0 ? r + 1 : r - 1;
+                    }
+                    
+                    // টার্গেট গ্রিড ভ্যালিড হলে সোয়াপ ট্র্যাকার কল করা
+                    if (targetRow >= 0 && targetRow < this.gridSize && targetCol >= 0 && targetCol < this.gridSize) {
+                        const targetTile = this.grid[targetRow][targetCol];
+                        if (targetTile) {
+                            // সিলেকশন বর্ডার রিসেট করা
+                            this.activeDragTile.getData('bg').setStrokeStyle(2, 0x33691e);
+                            this.selectedTile = null;
+                            this.comboCount = 0; // ইউজার ম্যানুয়ালি সোয়াপ করলে কম্বো কাউন্ট রিসেট
+                            this.swapTiles(this.activeDragTile, targetTile, true);
+                        }
+                    }
+                }
+            }
+        });
     }
 
     handleTileSelection(tile) {
-        if (this.isProcessing) return; // অ্যানিমেশন প্রসেস চলাকালীন ক্লিক ব্লক
+        if (this.isProcessing) return;
 
         if (!this.selectedTile) {
             this.selectedTile = tile;
-            // bg রেকট্যাঙ্গেলের বর্ডার কালার হলুদ (Yellow) করা হচ্ছে সিলেকশন বোঝাতে
-            tile.getData('bg').setStrokeStyle(3, 0xffeb3b);
+            tile.setData('bg').setStrokeStyle(3, 0xffeb3b); // হলুদ সিলেকশন বর্ডার
         } else {
             const tile1 = this.selectedTile;
             const tile2 = tile;
             this.selectedTile = null;
 
-            // বর্ডার কালার আবার আগের সবুজ রঙে ফিরিয়ে নেওয়া হচ্ছে
-            tile1.getData('bg').setStrokeStyle(2, 0x33691e);
+            tile1.setData('bg').setStrokeStyle(2, 0x33691e); // আগের সবুজ বর্ডার
 
-            // চেক করুন পাশাপাশি কি না
             const dist = Math.abs(tile1.getData('row') - tile2.getData('row')) + Math.abs(tile1.getData('col') - tile2.getData('col'));
             if (dist === 1) {
+                this.comboCount = 0; // ম্যানুয়াল ক্লিক সোয়াপে কম্বো রিসেট
                 this.swapTiles(tile1, tile2, true);
             }
         }
@@ -113,7 +177,7 @@ class GameScene extends Phaser.Scene {
                 if (checkMatch) {
                     const matched = this.checkAndClearMatches();
                     if (!matched) {
-                        this.swapTiles(tile1, tile2, false); // ম্যাচ না হলে আবার উল্টো দিকে সোয়াপ
+                        this.swapTiles(tile1, tile2, false); // ম্যাচ না হলে রিভার্স সোয়াপ
                     } else {
                         this.isProcessing = false;
                     }
@@ -159,35 +223,57 @@ class GameScene extends Phaser.Scene {
 
         if (matches.size > 0) {
             this.isProcessing = true;
+            this.comboCount++; // কম্বো চেইন প্লাস
+            
             let listToDestroy = Array.from(matches);
             let animationCount = 0;
+
+            // ক্রাশ সেন্টারের পজিশন নির্ণয় (পপ-আপ টেক্সট দেখানোর জন্য)
+            let avgX = 0, avgY = 0;
+            listToDestroy.forEach(t => { avgX += t.x; avgY += t.y; });
+            avgX /= listToDestroy.length;
+            avgY /= listToDestroy.length;
 
             listToDestroy.forEach(tile => {
                 const r = tile.getData('row');
                 const c = tile.getData('col');
-                this.grid[r][c] = null; // গ্রিড থেকে সরিয়ে ফেলা
+                this.grid[r][c] = null;
 
+                // পিন এবং স্পিন বিস্ফোরিত অ্যানিমেশন (Advanced Explode effect)
                 this.tweens.add({
                     targets: tile,
                     scale: 0,
+                    angle: 180, // ১৮০ ডিগ্রি ঘোরে সংকুচিত হবে
                     alpha: 0,
-                    duration: 200,
+                    duration: 250,
                     onComplete: () => {
                         tile.destroy();
                         animationCount++;
                         if (animationCount === listToDestroy.length) {
-                            this.cascadeGravity(); // সকল ক্র্যাশ অ্যানিমেশন শেষ হলে উপর থেকে ফলের পতন শুরু
+                            this.cascadeGravity();
                         }
                     }
                 });
             });
 
-            const points = matches.size * 10;
+            // কম্বো বোনাসসহ স্কোর হিসেব
+            const basePoints = matches.size * 10;
+            const comboBonus = (this.comboCount - 1) * 15;
+            const points = basePoints + comboBonus;
+            
             this.score += points;
             document.getElementById('current-score').innerText = this.score;
 
             if (this.score > parseInt(document.getElementById('high-score').innerText)) {
                 document.getElementById('high-score').innerText = this.score;
+            }
+
+            // কয়েন এবং কম্বো ফ্লোটিং পপ-আপ টেক্সট স্পন করানো
+            this.spawnFloatingText(avgX, avgY, `+${points}🪙`, '#ffeb3b');
+            if (this.comboCount > 1) {
+                this.time.delayedCall(300, () => {
+                    this.spawnFloatingText(avgX, avgY - 25, `Combo x${this.comboCount}!`, '#00E676');
+                });
             }
 
             this.saveCoinsToBackend(points);
@@ -197,13 +283,31 @@ class GameScene extends Phaser.Scene {
         return false;
     }
 
+    // ওটিপি বা কয়েন পপ-আপ অ্যানিমেশন মেথড
+    spawnFloatingText(x, y, text, color) {
+        const popup = this.add.text(x, y, text, {
+            fontSize: '18px',
+            fill: color,
+            fontWeight: 'extrabold',
+            stroke: '#000000',
+            strokeThickness: 3
+        }).setOrigin(0.5);
+
+        this.tweens.add({
+            targets: popup,
+            y: y - 45,
+            alpha: 0,
+            duration: 850,
+            onComplete: () => popup.destroy()
+        });
+    }
+
     cascadeGravity() {
         let maxDropDelay = 0;
 
         for (let c = 0; c < this.gridSize; c++) {
             let emptySpots = 0;
 
-            // নিচ থেকে উপরে স্ক্যান করে খালি জায়গাগুলোতে ফলের পতন করানো
             for (let r = this.gridSize - 1; r >= 0; r--) {
                 if (this.grid[r][c] === null) {
                     emptySpots++;
@@ -225,43 +329,22 @@ class GameScene extends Phaser.Scene {
                 }
             }
 
-            // একদম খালি হওয়া উপরের অংশে নতুন ফলের স্পন করানো
             for (let r = 0; r < emptySpots; r++) {
                 const targetRow = r;
                 const x = this.gridOffset.x + c * this.tileSize + this.tileSize / 2;
                 const startY = this.gridOffset.y - (emptySpots - r) * this.tileSize;
 
                 const randomFruit = Phaser.Math.RND.pick(this.fruits);
-                const container = this.add.container(x, startY);
-                container.setScale(0); // শুরুতে ছোট থেকে বড় হবে স্পন হওয়ার সময়
+                this.createTileAt(targetRow, c, x, startY, randomFruit);
 
-                const bg = this.add.graphics();
-                bg.fillStyle(0x1b5e20, 0.8);
-                bg.fillRoundedRect(-this.tileSize / 2 + 2, -this.tileSize / 2 + 2, this.tileSize - 4, this.tileSize - 4, 10);
-                bg.lineStyle(2, 0x33691e);
-                bg.strokeRoundedRect(-this.tileSize / 2 + 2, -this.tileSize / 2 + 2, this.tileSize - 4, this.tileSize - 4, 10);
-
-                const textObj = this.add.text(0, 0, randomFruit, { fontSize: '28px' }).setOrigin(0.5);
-
-                container.add(bg);
-                container.add(textObj);
-
-                container.setData('row', targetRow);
-                container.setData('col', c);
-                container.setData('fruit', randomFruit);
-                container.setData('text', textObj);
-                container.setData('bg', bg);
-
-                container.setInteractive(new Phaser.Geom.Rectangle(-this.tileSize / 2, -this.tileSize / 2, this.tileSize, this.tileSize), Phaser.Geom.Rectangle.Contains);
-                this.grid[targetRow][c] = container;
-
-                container.on('pointerdown', () => this.handleTileSelection(container));
+                const tileContainer = this.grid[targetRow][c];
+                tileContainer.setScale(0);
 
                 const dropDelay = r * 50;
                 if (dropDelay > maxDropDelay) maxDropDelay = dropDelay;
 
                 this.tweens.add({
-                    targets: container,
+                    targets: tileContainer,
                     y: this.gridOffset.y + targetRow * this.tileSize + this.tileSize / 2,
                     scale: 1,
                     delay: dropDelay,
@@ -271,13 +354,93 @@ class GameScene extends Phaser.Scene {
             }
         }
 
-        // ক্যাসকেড পুরোপুরি শেষ হলে অটোমেটিক চেইন ম্যাচ (Combo) আবার চেক করা হবে
         this.time.delayedCall(350 + maxDropDelay, () => {
             const hasMoreMatches = this.checkAndClearMatches();
             if (!hasMoreMatches) {
-                this.isProcessing = false; // কোনো ম্যাচ না থাকলে প্লেয়ার ক্লিক অ্যাক্টিভ হবে
+                this.isProcessing = false;
+                this.checkAndReshuffleIfNeeded(); // সম্ভাব্য কোনো চাল না থাকলে শাফেল করা হবে
             }
         });
+    }
+
+    // গ্রিডে সম্ভাব্য কোনো চাল বাকি আছে কি না তা হিসাব করা
+    hasPossibleMoves() {
+        // রো চেকিং (ডানদিকের প্রতিবেশীর সাথে সোয়াপ ট্রাই করা)
+        for (let r = 0; r < this.gridSize; r++) {
+            for (let c = 0; c < this.gridSize - 1; c++) {
+                if (this.checkSwapCreatesMatch(r, c, r, c + 1)) return true;
+            }
+        }
+        // কলাম চেকিং (নিচের প্রতিবেশীর সাথে সোয়াপ ট্রাই করা)
+        for (let r = 0; r < this.gridSize - 1; r++) {
+            for (let c = 0; c < this.gridSize; c++) {
+                if (this.checkSwapCreatesMatch(r, c, r + 1, c)) return true;
+            }
+        }
+        return false;
+    }
+
+    checkSwapCreatesMatch(r1, c1, r2, c2) {
+        // ভার্চুয়ালি ডাটাবেজ অদলবদল করা
+        const f1 = this.grid[r1][c1].getData('fruit');
+        const f2 = this.grid[r2][c2].getData('fruit');
+
+        this.grid[r1][c1].setData('fruit', f2);
+        this.grid[r2][c2].setData('fruit', f1);
+
+        let matchFound = false;
+
+        // ভার্চুয়ালি চেক করা
+        for (let r = 0; r < this.gridSize; r++) {
+            for (let c = 0; c < this.gridSize; c++) {
+                // রো চেক ৩-ম্যাচ
+                if (c < this.gridSize - 2) {
+                    if (this.grid[r][c].getData('fruit') === this.grid[r][c+1].getData('fruit') &&
+                        this.grid[r][c+1].getData('fruit') === this.grid[r][c+2].getData('fruit')) {
+                        matchFound = true;
+                        break;
+                    }
+                }
+                // কলাম চেক ৩-ম্যাচ
+                if (r < this.gridSize - 2) {
+                    if (this.grid[r][c].getData('fruit') === this.grid[r+1][c].getData('fruit') &&
+                        this.grid[r+1][c].getData('fruit') === this.grid[r+2][c].getData('fruit')) {
+                        matchFound = true;
+                        break;
+                    }
+                }
+            }
+            if (matchFound) break;
+        }
+
+        // অরিজিনাল ডাটা আবার ফিরিয়ে দেওয়া
+        this.grid[r1][c1].setData('fruit', f1);
+        this.grid[r2][c2].setData('fruit', f2);
+
+        return matchFound;
+    }
+
+    checkAndReshuffleIfNeeded() {
+        if (!this.hasPossibleMoves()) {
+            this.isProcessing = true;
+            this.spawnFloatingText(180, 200, "No Moves! Shuffling...", '#FF3D00');
+
+            // ১ সেকেন্ড ডিলে নিয়ে বোর্ড রি-শাফেল করা
+            this.time.delayedCall(1000, () => {
+                // আগের সব টাইলস মুছে দেওয়া
+                for (let r = 0; r < this.gridSize; r++) {
+                    for (let c = 0; c < this.gridSize; c++) {
+                        if (this.grid[r][c]) {
+                            this.grid[r][c].destroy();
+                            this.grid[r][c] = null;
+                        }
+                    }
+                }
+                // নতুন বোর্ড রেন্ডার করা
+                this.generateBoard();
+                this.isProcessing = false;
+            });
+        }
     }
 
     async saveCoinsToBackend(amount) {
@@ -299,7 +462,7 @@ class GameScene extends Phaser.Scene {
     }
 }
 
-// Phaser গেম কনফিগ সেটআপ (Scale Manager সহ রেসপন্সিভ করা হয়েছে)
+// গেম কনফিগারেশন (মোবাইল ও যেকোনো স্ক্রিন সাইজের অটো-স্কেলিং মেথড)
 const gameConfig = {
     type: Phaser.AUTO,
     width: 360,
