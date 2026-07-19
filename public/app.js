@@ -18,64 +18,9 @@ if ('serviceWorker' in navigator) {
         .catch(err => console.error("SW Registration failed: ", err));
 }
 
-// PWA ইনস্টল ইভেন্ট ট্র্যাকিং এবং ম্যানুয়াল বাটন শো করা
-let deferredPrompt;
-window.addEventListener('beforeinstallprompt', (e) => {
-    e.preventDefault();
-    deferredPrompt = e;
-    
-    // ১. ম্যানুয়াল ডাউনলোড বাটনটি ড্যাশবোর্ডে শো করা
-    const installBtn = document.getElementById('pwa-install-btn');
-    if (installBtn) {
-        installBtn.classList.remove('hidden');
-    }
-
-    // ২. নতুন সাইন-আপ সম্পন্ন হয়ে থাকলে অটো-প্রম্পট দেখাবে
-    if (sessionStorage.getItem('is_new_signup') === 'true') {
-        showPWAInstallPrompt();
-    }
-});
-
-function showPWAInstallPrompt() {
-    if (deferredPrompt) {
-        sessionStorage.removeItem('is_new_signup'); // প্রম্পট শো করার পর ফ্ল্যাগ ক্লিন
-        
-        if (confirm("নিবন্ধন সফল হয়েছে! আপনি কি আপনার মোবাইলের হোম স্ক্রিনে গেমটি অ্যাপ হিসেবে নামাতে (Download/Install) চান?")) {
-            triggerPWAInstall();
-        }
-    }
-}
-
-// PWA ইনস্টলেশন রান করার মূল মেথড
-async function triggerPWAInstall() {
-    if (deferredPrompt) {
-        deferredPrompt.prompt();
-        const { outcome } = await deferredPrompt.userChoice;
-        console.log(`User response to install: ${outcome}`);
-        deferredPrompt = null;
-        
-        // ইনস্টলেশন শুরু হলে বাটনটি হাইড করে দেওয়া
-        const installBtn = document.getElementById('pwa-install-btn');
-        if (installBtn) {
-            installBtn.classList.add('hidden');
-        }
-    }
-}
-
-// ম্যানুয়াল ডাউনলোড বাটনের ক্লিক লজিক কানেক্ট করা
-function setupPWAInstallButton() {
-    const installBtn = document.getElementById('pwa-install-btn');
-    if (installBtn) {
-        installBtn.addEventListener('click', () => {
-            triggerPWAInstall();
-        });
-    }
-}
-
 function enterApp() {
     updateUIBalances();
     switchTab('home');
-    setupPWAInstallButton(); // ইনস্টলেশন ইভেন্ট কানেকশন
     startHeartbeatTimer();
 }
 
@@ -88,7 +33,7 @@ function updateUIBalances() {
     document.getElementById('header-username').innerText = currentUser.nickname;
     document.getElementById('wallet-gem').innerText = currentUser.diamond_balance || 0;
     
-    // কয়েন কনভার্সন (৬৭৭,৪০০ কয়েন = $১.০০)
+    // কয়েন কনভার্সন (৬৭থ,৪০০ কয়েন = $১.০০)
     const coinUSD = ((currentUser.coin_balance || 0) / 677400).toFixed(2);
     document.getElementById('coin-usd').innerText = `=$${coinUSD}`;
     
