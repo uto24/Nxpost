@@ -346,7 +346,8 @@ class GameScene extends Phaser.Scene {
                 this.tweens.add({
                     targets: tileContainer,
                     y: this.gridOffset.y + targetRow * this.tileSize + this.tileSize / 2,
-                    scale: 1,
+                    scaleX: 1,
+                    scaleY: 1,
                     delay: dropDelay,
                     duration: 300,
                     ease: 'Bounce.easeOut'
@@ -486,7 +487,8 @@ class GameScene extends Phaser.Scene {
 
             this.tweens.add({
                 targets: [hintMove.t1, hintMove.t2],
-                scale: 1.15, // টাইলস সামান্য বড় হবে
+                scaleX: 1.15, // টাইলস সামান্য বড় হবে
+                scaleY: 1.15,
                 duration: 250,
                 yoyo: true,
                 repeat: 1, // দুইবার ডাবল ফ্ল্যাশ বা বাউন্স করবে
@@ -513,8 +515,15 @@ class GameScene extends Phaser.Scene {
             });
             const data = await res.json();
             if (res.ok) {
+                // মেইন গেম সেশনের ব্যালেন্স লোকালস্টোরেজ এবং হেডার স্ক্রিনে সিঙ্ক করা
                 currentUser.coin_balance = data.newBalance;
-                updateUIBalances();
+                localStorage.setItem('blockbuster_user', JSON.stringify(currentUser));
+                
+                // game.html এর মেইন ইউআই ব্যালেন্স লাইভ আপডেট
+                const coinText = document.getElementById('coin-balance-game');
+                if (coinText) {
+                    coinText.innerText = data.newBalance;
+                }
             }
         } catch (err) {
             console.error("Coin save error: ", err);
@@ -522,7 +531,7 @@ class GameScene extends Phaser.Scene {
     }
 }
 
-// গেম কনফিগারেশন (মোবাইল ও যেকোনো স্ক্রিন সাইজের অটো-স্কেলিং মেথড)
+// গেম কনফিগারেশন (Scale Manager সহ)
 const gameConfig = {
     type: Phaser.AUTO,
     width: 360,
