@@ -8,29 +8,27 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- FontAwesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script>
+        if (!sessionStorage.getItem('temp_signup')) {
+            window.location.href = '/signup';
+        }
+    </script>
 </head>
 <body class="bg-gray-950 font-sans min-h-screen flex justify-center text-white">
 
     <div class="w-full max-w-md bg-[#1B5E20] min-h-screen flex flex-col justify-between p-6 overflow-y-auto shadow-2xl relative">
         <div class="text-center mt-12">
-            <h1 class="text-4xl font-black text-yellow-300 tracking-wide drop-shadow-[0_5px_5px_rgba(0,0,0,0.5)]">BLOCKxxx BUSTER</h1>
+            <h1 class="text-4xl font-black text-yellow-300 tracking-wide drop-shadow-[0_5px_5px_rgba(0,0,0,0.5)]">BLOCK BUSTER</h1>
         </div>
 
-        <!-- Verification Card -->
         <div class="w-full bg-black/40 backdrop-blur-md rounded-3xl p-6 text-center space-y-4">
             <h2 class="text-lg font-bold"><i class="fa-solid fa-envelope-open-text mr-2 text-yellow-300"></i>Email Verification</h2>
-            <p class="text-xs text-green-300">vvvvআপনার জিমেইলে একটি ৬-ডিজিটের ওটিপি কোড পাঠানো হয়েছে। সেটি নিচে লিখুন:</p>
+            <p class="text-xs text-green-300">আপনার জিমেইলে একটি ৬-ডিজিটের ওটিপি কোড পাঠানো হয়েছে। সেটি নিচে লিখুন:</p>
             
             <input id="signup-otp" type="text" placeholder="Enter 6-Digit OTP" class="w-full p-3 rounded-2xl bg-white/10 text-white placeholder-gray-300 border border-white/20 text-center text-lg tracking-widest focus:outline-none focus:ring-2 focus:ring-green-400">
             
-            <!-- মূল ভেরিফাই বাটন -->
             <button onclick="verifyAndRegister()" class="w-full bg-[#4CAF50] hover:bg-green-600 py-3 rounded-full text-white font-extrabold text-lg shadow-lg border-b-4 border-green-700">
                 <i class="fa-solid fa-circle-check mr-2"></i> Verify & Register
-            </button>
-
-            <!-- টেস্ট বাটন (যা দিয়ে বুঝা যাবে জাভাস্ক্রিপ্ট সচল কি না) -->
-            <button onclick="testScript()" class="w-full bg-blue-500 hover:bg-blue-600 py-2 rounded-full text-white font-bold text-xs mt-2">
-                🛠️ Test Script Load
             </button>
         </div>
 
@@ -38,18 +36,6 @@
     </div>
 
     <script>
-        console.log("verify.html script initialized!");
-
-        // টেস্ট ফাংশন (এটি কাজ করলে বুঝবেন আপনার ক্যাশ বা জাভাস্ক্রিপ্ট লোডিং ওকে আছে)
-        function testScript() {
-            alert("অভিনন্দন! আপনার ভেরিফিকেশন পেইজের জাভাস্ক্রিপ্ট স্ক্রিপ্টটি সফলভাবে ব্রাউজারে লোড হয়েছে।");
-        }
-
-        // সাময়িক সাইন-আপ ডাটা না থাকলে রিডাইরেক্ট করবে
-        if (!sessionStorage.getItem('temp_signup')) {
-            window.location.href = '/signup';
-        }
-
         function showError(data) {
             if (!data) return alert("ত্রুটি ঘটেছে। আবার চেষ্টা করুন।");
             if (typeof data.detail === 'string') {
@@ -115,6 +101,10 @@
                 if (response.ok) {
                     alert("নিবন্ধন সফল হয়েছে!");
                     sessionStorage.removeItem('temp_signup');
+                    
+                    // PWA ডাউনলোড প্রম্পট দেখানোর জন্য সিগন্যাল সেট করা
+                    sessionStorage.setItem('is_new_signup', 'true');
+                    
                     localStorage.setItem('blockbuster_user', JSON.stringify(data.user));
                     window.location.href = '/';
                 } else {
