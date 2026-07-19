@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Block Buster - Sign Up</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script>
+        if (localStorage.getItem('blockbuster_user')) {
+            window.location.href = '/';
+        }
+    </script>
+</head>
+<body class="bg-gray-950 font-sans min-h-screen flex justify-center text-white">
+
+    <div class="w-full max-w-md bg-[#1B5E20] min-h-screen flex flex-col justify-between p-6 overflow-y-auto shadow-2xl relative">
+        <div class="text-center mt-6">
+            <h1 class="text-4xl font-black text-yellow-300 tracking-wide drop-shadow-[0_5px_5px_rgba(0,0,0,0.5)]">BLOCK BUSTER</h1>
+        </div>
+
+        <!-- Signup Form Card -->
+        <div class="w-full bg-black/40 backdrop-blur-md rounded-3xl p-6 text-center space-y-4">
+            <h2 class="text-lg font-bold"><i class="fa-solid fa-user-plus mr-2 text-yellow-300"></i>Create Account</h2>
+            
+            <input id="signup-email" type="email" placeholder="example@gmail.com" class="w-full p-3 rounded-2xl bg-white/10 text-white placeholder-gray-300 border border-white/20 focus:outline-none">
+            <input id="signup-password" type="password" placeholder="Choose Password" class="w-full p-3 rounded-2xl bg-white/10 text-white placeholder-gray-300 border border-white/20 focus:outline-none">
+            <input id="signup-device" type="text" placeholder="Device Fingerprint" class="w-full p-3 rounded-2xl bg-white/10 text-white placeholder-gray-300 border border-white/20 focus:outline-none">
+            <input id="signup-ref" type="text" placeholder="Referral Code (Optional)" class="w-full p-3 rounded-2xl bg-white/10 text-white placeholder-gray-300 border border-white/20 focus:outline-none">
+            
+            <button onclick="requestSignupOTP()" class="w-full bg-yellow-500 hover:bg-yellow-600 py-3 rounded-full text-black font-extrabold text-lg shadow-lg">
+                <i class="fa-solid fa-paper-plane mr-2"></i> Send OTP to Gmail
+            </button>
+
+            <p class="text-xs text-gray-400">Already have an account? <a href="/login" class="text-yellow-300 underline font-bold">Log In</a></p>
+        </div>
+
+        <p class="text-[10px] text-gray-400 text-center">Agree to <span class="underline">User Agreement</span> and <span class="underline">Privacy Policy</span></p>
+    </div>
+
+    <script>
+        async function requestSignupOTP() {
+            const email = document.getElementById('signup-email').value;
+            const device = document.getElementById('signup-device').value;
+            const password = document.getElementById('signup-password').value;
+            const ref = document.getElementById('signup-ref').value;
+
+            if (!email || !device || !password) {
+                return alert("সবগুলো ক্ষেত্র (Email, Password, Device ID) পূরণ করা আবশ্যক।");
+            }
+
+            const response = await fetch('/api/signup', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    action: 'send_otp',
+                    email: email,
+                    device_fingerprint: device,
+                    password: password
+                })
+            });
+
+            const data = await response.json();
+            if (response.ok) {
+                alert(data.message);
+                
+                // ভেরিফিকেশনের জন্য ডাটা সাময়িকভাবে sessionStorage এ সেভ করে রিডাইরেক্ট করা
+                const tempUser = { email, device_fingerprint: device, password, referrer_id: ref ? parseInt(ref) : null };
+                sessionStorage.setItem('temp_signup', JSON.stringify(tempUser));
+                
+                window.location.href = '/verify';
+            } else {
+                alert(data.detail || "ত্রুটি ঘটেছে। আবার চেষ্টা করুন।");
+            }
+        }
+    </script>
+</body>
+</html>
