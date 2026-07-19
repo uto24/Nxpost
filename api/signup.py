@@ -4,7 +4,7 @@ import random
 import hashlib
 import requests
 from datetime import datetime, timezone
-
+from typing import Optional
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
@@ -35,15 +35,16 @@ SENDER_EMAIL = "noreply@nxpost.online"               # আপনার ভের
 
 
 # ================= REQUEST MODELS =================
+# সংশোধিত রিকোয়েস্ট মডেল (এটি সব null ভ্যালু সুন্দরভাবে একসেপ্ট করবে)
 class SignupRequest(BaseModel):
     action: str  # 'send_otp' অথবা 'verify_and_register'
     email: str
-    password: str = None
-    nickname: str = None
-    device_fingerprint: str = None
-    referrer_id: int = None
-    otp_code: str = None
-
+    password: Optional[str] = None
+    nickname: Optional[str] = None
+    device_fingerprint: Optional[str] = None
+    referrer_id: Optional[int] = None
+    otp_code: Optional[str] = None
+    
 # ================= নিরাপদ পাসওয়ার্ড হ্যাশিং =================
 def hash_password(password: str) -> str:
     salt = "BLOCK_BUSTER_SALT_2026"
