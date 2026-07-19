@@ -159,7 +159,15 @@ def record_heartbeat(req: HeartbeatRequest):
     supabase.table("activity_logs").insert({"user_id": req.userId}).execute()
     return {"success": True, "message": "Heartbeat logged"}
 
+# ================= FALLBACK ROOT ROUTES =================
 
+@app.get("/")
+def read_root():
+    return {"message": "Block Buster API is running successfully!"}
+
+@app.get("/api")
+def read_api_root():
+    return {"message": "Block Buster API is running successfully!"}
 @app.get("/api/referrals")
 def get_referrals(userId: int):
     # রিলেশনাল জয়েনিং কুয়েরি
