@@ -8,10 +8,11 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- FontAwesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- PWA Manifest Link -->
+    <link rel="manifest" href="/manifest.json">
     <!-- Phaser.js Game Engine -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/phaser/3.60.0/phaser.min.js"></script>
     <script>
-        // সিকিউরিটি গার্ড: লগইন না থাকলে সরাসরি লগইন পেইজে রিডাইরেক্ট করবে
         if (!localStorage.getItem('blockbuster_user')) {
             window.location.href = '/login';
         }
@@ -22,7 +23,6 @@
 </head>
 <body class="bg-gray-950 font-sans min-h-screen flex justify-center text-white">
 
-    <!-- Mobile Frame Container -->
     <div class="w-full max-w-md bg-[#1B5E20] min-h-screen flex flex-col shadow-2xl relative overflow-hidden">
         
         <!-- ================= MAIN APP HEADER ================= -->
@@ -45,19 +45,20 @@
             </div>
         </header>
 
-        <!-- ================= MAIN APP CONTENT AREA ================= -->
+        <!-- ================= MAIN APP CONTENT ================= -->
         <main class="flex-grow overflow-y-auto relative">
-            
-            <!-- Game Tab -->
             <div id="game-tab" class="hidden h-full flex flex-col justify-between p-3">
-                <div class="flex justify-between text-xs bg-black/20 p-2 rounded-xl mb-2">
+                <div class="flex justify-between items-center text-xs bg-black/20 p-2 rounded-xl mb-2">
                     <div>🏆 High Score: <span id="high-score">0</span></div>
+                    
+                    <!-- HTML স্তরে নতুন Hint বাটন যুক্ত করা হয়েছে -->
+                    <button onclick="triggerGameHint()" class="bg-yellow-500 hover:bg-yellow-600 text-black px-2.5 py-0.5 rounded-full font-extrabold text-[10px] shadow flex items-center space-x-1">
+                        <i class="fa-solid fa-lightbulb"></i> <span>Hint</span>
+                    </button>
+
                     <div class="text-right text-yellow-300">⭐ Score: <span id="current-score">0</span></div>
                 </div>
-
-                <!-- Phaser container -->
                 <div id="block-game-container" class="mx-auto border-4 border-green-900 rounded-2xl overflow-hidden bg-[#0c3c14]"></div>
-
                 <p class="text-[10px] text-green-200 text-center mt-2">ফলের ওপর ট্যাপ করে পাশাপাশি বা উপর-নিচ সোয়াপ (Swap) করে ৩টি মিলান!</p>
             </div>
 
@@ -67,7 +68,6 @@
                     <h2 class="text-xl font-black">Referral System</h2>
                     <button onclick="openRulesModal()" class="bg-green-700 px-3 py-1 text-xs rounded-full border border-green-500"><i class="fa-solid fa-circle-info mr-1"></i> Rules</button>
                 </div>
-
                 <div class="bg-blue-600/30 p-4 rounded-3xl border border-blue-500/50 text-center">
                     <h3 class="text-lg font-black text-yellow-300">SHARE AND EARN</h3>
                     <p class="text-xs text-white/80 mt-1">Friend signs up = <span class="font-bold text-green-400">+10,000 💎</span></p>
@@ -77,12 +77,10 @@
                         <span class="w-8 h-8 rounded-full bg-gray-700 text-sm flex items-center justify-center">🧑</span>
                     </div>
                 </div>
-
                 <div class="bg-black/30 p-3 rounded-2xl flex items-center justify-between border border-green-800">
                     <input id="referral-link" type="text" readonly class="bg-transparent text-xs text-gray-300 focus:outline-none w-3/4" value="">
                     <button onclick="copyRefLink()" class="bg-yellow-500 text-black text-xs font-bold px-4 py-2 rounded-xl"><i class="fa-solid fa-copy mr-1"></i> Copy</button>
                 </div>
-
                 <div class="bg-black/20 p-3 rounded-2xl">
                     <h4 class="text-sm font-bold mb-2">My Referrals</h4>
                     <div id="ref-list-container" class="space-y-2"></div>
@@ -96,7 +94,6 @@
                     <h3 class="text-2xl font-black mt-2" id="wallet-gem">0</h3>
                     <p class="text-xs text-gray-200">Available Gems</p>
                 </div>
-
                 <h4 class="font-bold text-sm">How to use <i class="fa-solid fa-gem text-green-400"></i></h4>
                 <div class="bg-white/5 p-3 rounded-2xl flex justify-between items-center border border-white/10">
                     <div>
@@ -106,7 +103,6 @@
                     <button class="bg-yellow-500 text-black text-xs font-bold px-3 py-1.5 rounded-full">Exchange</button>
                 </div>
             </div>
-
         </main>
 
         <!-- ================= PROFILE SIDEBAR DRAWER ================= -->
@@ -122,13 +118,11 @@
                         </div>
                     </div>
                 </div>
-
                 <div class="grid grid-cols-3 text-center bg-white/5 p-3 rounded-2xl text-xs">
                     <div><div class="font-bold text-yellow-400">0</div><div class="text-gray-400">Friends</div></div>
                     <div><div class="font-bold text-yellow-400">0</div><div class="text-gray-400">Follow</div></div>
                     <div><div class="font-bold text-yellow-400">3</div><div class="text-gray-400">Fans</div></div>
                 </div>
-
                 <div>
                     <h4 class="text-xs text-gray-400 font-bold mb-2">My wallet</h4>
                     <div class="grid grid-cols-2 gap-2">
@@ -144,14 +138,11 @@
                         </div>
                     </div>
                 </div>
-
                 <div class="space-y-1">
                     <button class="w-full text-left p-3 rounded-xl hover:bg-white/5 flex justify-between items-center"><span class="text-sm"><i class="fa-solid fa-user mr-2 text-gray-400"></i> Profile</span><i class="fa-solid fa-chevron-right text-xs text-gray-600"></i></button>
                     <button onclick="openSettings()" class="w-full text-left p-3 rounded-xl hover:bg-white/5 flex justify-between items-center"><span class="text-sm"><i class="fa-solid fa-gear mr-2 text-gray-400"></i> Settings</span><i class="fa-solid fa-chevron-right text-xs text-gray-600"></i></button>
                 </div>
             </div>
-
-            <!-- Logout -->
             <button onclick="handleLogout()" class="w-full bg-red-600/20 hover:bg-red-600/30 text-red-400 py-3 rounded-2xl font-bold flex justify-between items-center px-4">
                 <span><i class="fa-solid fa-right-from-bracket mr-2"></i> Log Out</span>
                 <i class="fa-solid fa-chevron-right text-xs"></i>
