@@ -29,8 +29,8 @@ supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 # ================= এপিআই কি কনফিগারেশন সেকশন =================
 # দয়া করে নিচে আপনার জেনারেট করা নতুন সিক্রেট কি-গুলো কোটেশনের ভেতরে বসিয়ে দিন:
 
-BREVO_API_KEY = "YOUR_NEW_BREVO_API_KEY_HERE"    # এখানে আপনার নতুন 'xkeysib-...' কী-টি বসান
-RESEND_API_KEY = "YOUR_NEW_RESEND_API_KEY_HERE"  # এখানে আপনার নতুন 're_...' কী-টি বসান
+BREVO_API_KEY = "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"    # এখানে আপনার নতুন 'xkeysib-...' কী-টি বসান
+RESEND_API_KEY = "re_QUfehT2K_LUef2YPJb14rBVAKwwiijFkk"  # এখানে আপনার নতুন 're_...' কী-টি বসান
 SENDER_EMAIL = "rakib03x@gmail.com"               # আপনার ভেরিফাইড Brevo প্রেরক ইমেইল
 
 
