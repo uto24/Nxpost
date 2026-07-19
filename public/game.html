@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Block Buster - Game Play</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Phaser.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/phaser/3.60.0/phaser.min.js"></script>
+    <script>
+        // সেশন চেক গার্ড
+        if (!localStorage.getItem('blockbuster_user')) {
+            window.location.href = '/login';
+        }
+        var currentUser = JSON.parse(localStorage.getItem('blockbuster_user'));
+    </script>
+</head>
+<body class="bg-gray-950 font-sans min-h-screen flex justify-center text-white">
+
+    <div class="w-full max-w-md bg-[#1B5E20] min-h-screen flex flex-col justify-between p-4 relative overflow-hidden">
+        
+        <!-- Game Page Header -->
+        <header class="flex justify-between items-center bg-[#1B5E20] p-2 shrink-0 border-b border-green-800">
+            <!-- Back to Dashboard Button -->
+            <a href="/" class="text-white text-xl hover:scale-110 transition"><i class="fa-solid fa-arrow-left"></i></a>
+            
+            <div class="flex items-center space-x-2">
+                <div class="bg-yellow-600/50 px-3 py-1 rounded-full text-xs font-extrabold flex items-center space-x-1">
+                    <i class="fa-solid fa-coins text-yellow-400"></i> <span id="coin-balance-game">0</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Game Area -->
+        <div class="flex-grow flex flex-col justify-center py-2">
+            <div class="flex justify-between items-center text-xs bg-black/20 p-2 rounded-xl mb-3">
+                <div>🏆 High Score: <span id="high-score">0</span></div>
+                
+                <!-- HTML level Hint button -->
+                <button onclick="triggerGameHint()" class="bg-yellow-500 hover:bg-yellow-600 text-black px-3 py-1 rounded-full font-extrabold text-[11px] shadow flex items-center space-x-1">
+                    <i class="fa-solid fa-lightbulb"></i> <span>Get Hint</span>
+                </button>
+
+                <div class="text-right text-yellow-300">⭐ Score: <span id="current-score">0</span></div>
+            </div>
+
+            <!-- Phaser Canvas Game Container -->
+            <div id="block-game-container" class="mx-auto border-4 border-green-900 rounded-2xl overflow-hidden bg-[#0c3c14]"></div>
+        </div>
+
+        <p class="text-[10px] text-green-200 text-center mb-2">ফলের ওপর ট্যাপ করে পাশাপাশি বা উপর-নিচ সোয়াপ (Swap) করে ৩টি মিলান! প্রতিটি ম্যাচে আপনার ওয়ালেটে কয়েন যুক্ত হবে।</p>
+    </div>
+
+    <script>
+        // ডোমেইনে কয়েন আপডেট করার হেল্পার
+        document.getElementById('coin-balance-game').innerText = currentUser.coin_balance || 0;
+
+        window.triggerGameHint = () => {
+            if (window.fruitMatchGame) {
+                const scene = window.fruitMatchGame.scene.keys['GameScene'];
+                if (scene) scene.showMoveHint();
+            }
+        };
+    </script>
+    <script src="game.js"></script>
+</body>
+</html>
