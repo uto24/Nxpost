@@ -1,5 +1,6 @@
 {
   "version": 2,
+  "cleanUrls": true,
   "builds": [
     { "src": "api/*.py", "use": "@vercel/python" },
     { "src": "public/**", "use": "@vercel/static" }
@@ -11,9 +12,6 @@
     { "src": "/api/heartbeat", "dest": "api/heartbeat.py" },
     { "src": "/api/referrals", "dest": "api/referrals.py" },
     { "src": "/api/cron/verify", "dest": "api/cron_verify.py" },
-    { "src": "/login", "dest": "public/login.html" },
-    { "src": "/signup", "dest": "public/signup.html" },
-    { "src": "/verify", "dest": "public/verify.html" },
     { "src": "/(.*)", "dest": "public/$1" }
   ],
   "headers": [
