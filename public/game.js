@@ -36,11 +36,10 @@ class GameScene extends Phaser.Scene {
                 // টাইল কন্টেইনার এবং ব্যাকগ্রাউন্ড আঁকা
                 const container = this.add.container(x, y);
                 
-                const bg = this.add.graphics();
-                bg.fillStyle(0x1b5e20, 0.8);
-                bg.fillRoundedRect(-this.tileSize / 2 + 2, -this.tileSize / 2 + 2, this.tileSize - 4, this.tileSize - 4, 10);
-                bg.lineStyle(2, 0x33691e);
-                bg.strokeRoundedRect(-this.tileSize / 2 + 2, -this.tileSize / 2 + 2, this.tileSize - 4, this.tileSize - 4, 10);
+                // কন্টেইনারের ইন্টারঅ্যাক্টিভ ব্যাকগ্রাউন্ড রেকট্যাঙ্গেল (Phaser.GameObjects.Rectangle)
+                // এটি ক্লিক ডিটেকশন ১০০% নির্ভুল এবং মোবাইল রেসপন্সিভ করে তোলে
+                const bg = this.add.rectangle(0, 0, this.tileSize - 4, this.tileSize - 4, 0x1b5e20, 0.8);
+                bg.setStrokeStyle(2, 0x33691e);
 
                 const textObj = this.add.text(0, 0, randomFruit, { fontSize: '28px' }).setOrigin(0.5);
 
@@ -53,10 +52,11 @@ class GameScene extends Phaser.Scene {
                 container.setData('text', textObj);
                 container.setData('bg', bg);
 
-                container.setInteractive(new Phaser.Geom.Rectangle(-this.tileSize / 2, -this.tileSize / 2, this.tileSize, this.tileSize), Phaser.Geom.Rectangle.Contains);
+                // গ্রাফিক্সের পরিবর্তে সরাসরি রেকট্যাঙ্গেলে ক্লিক ইভেন্ট সেট করা হয়েছে
+                bg.setInteractive();
                 this.grid[row][col] = container;
 
-                container.on('pointerdown', () => this.handleTileSelection(container));
+                bg.on('pointerdown', () => this.handleTileSelection(container));
             }
         }
     }
@@ -66,15 +66,15 @@ class GameScene extends Phaser.Scene {
 
         if (!this.selectedTile) {
             this.selectedTile = tile;
-            tile.setData('bg').lineStyle(3, 0xffeb3b);
-            tile.setData('bg').strokeRoundedRect(-this.tileSize / 2 + 2, -this.tileSize / 2 + 2, this.tileSize - 4, this.tileSize - 4, 10);
+            // bg রেকট্যাঙ্গেলের বর্ডার কালার হলুদ (Yellow) করা হচ্ছে সিলেকশন বোঝাতে
+            tile.getData('bg').setStrokeStyle(3, 0xffeb3b);
         } else {
             const tile1 = this.selectedTile;
             const tile2 = tile;
             this.selectedTile = null;
 
-            tile1.setData('bg').lineStyle(2, 0x33691e);
-            tile1.setData('bg').strokeRoundedRect(-this.tileSize / 2 + 2, -this.tileSize / 2 + 2, this.tileSize - 4, this.tileSize - 4, 10);
+            // বর্ডার কালার আবার আগের সবুজ রঙে ফিরিয়ে নেওয়া হচ্ছে
+            tile1.getData('bg').setStrokeStyle(2, 0x33691e);
 
             // চেক করুন পাশাপাশি কি না
             const dist = Math.abs(tile1.getData('row') - tile2.getData('row')) + Math.abs(tile1.getData('col') - tile2.getData('col'));
@@ -299,12 +299,17 @@ class GameScene extends Phaser.Scene {
     }
 }
 
+// Phaser গেম কনফিগ সেটআপ (Scale Manager সহ রেসপন্সিভ করা হয়েছে)
 const gameConfig = {
     type: Phaser.AUTO,
     width: 360,
     height: 400,
     parent: 'block-game-container',
     backgroundColor: '#0a2f12',
+    scale: {
+        mode: Phaser.Scale.FIT,
+        autoCenter: Phaser.Scale.CENTER_BOTH
+    },
     scene: GameScene
 };
 
