@@ -1,4 +1,4 @@
-const CACHE_NAME = 'blockbuster-pwa-v2';
+const CACHE_NAME = 'blockbuster-pwa-v3';
 const ASSETS = [
     '/',
     '/index.html',
@@ -7,7 +7,9 @@ const ASSETS = [
     '/verify',
     '/app.js',
     '/game.js',
-    '/manifest.json'
+    '/manifest.json',
+    '/icon-192.png',
+    '/icon-512.png'
 ];
 
 // ইনস্টলেশন এবং ফাইল অফলাইন ক্যাশিং
@@ -35,10 +37,11 @@ self.addEventListener('activate', (event) => {
     return self.clients.claim();
 });
 
-// Network-First Strategy: সবসময় সার্ভার থেকে নতুন কোড আনবে, সার্ভার ডাউন থাকলে বা অফলাইনে ক্যাশ থেকে লোড করবে
+// Chrome PWA Audit পাস করার জন্য প্রতিটি রিকোয়েস্টে respondWith ব্যবহার নিশ্চিত করা হয়েছে
 self.addEventListener('fetch', (event) => {
-    // API এবং POST রিকোয়েস্ট ইন্টারসেপ্ট করা সম্পূর্ণ বন্ধ রাখা হয়েছে (সিকিউরিটির জন্য)
+    // API বা POST রিকোয়েস্ট সরাসরি নেটওয়ার্ক দিয়ে পাস করানো
     if (event.request.method !== 'GET' || event.request.url.includes('/api/')) {
+        event.respondWith(fetch(event.request));
         return;
     }
 
