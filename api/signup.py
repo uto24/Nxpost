@@ -20,10 +20,21 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Supabase ক্লায়েন্ট কানেকশন
 SUPABASE_URL = os.environ.get("SUPABASE_URL")
 SUPABASE_KEY = os.environ.get("SUPABASE_SERVICE_ROLE_KEY")
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
+
+# ================= এপিআই কি কনফিগারেশন সেকশন =================
+# দয়া করে নিচে আপনার জেনারেট করা নতুন সিক্রেট কি-গুলো কোটেশনের ভেতরে বসিয়ে দিন:
+
+BREVO_API_KEY = "YOUR_NEW_BREVO_API_KEY_HERE"    # এখানে আপনার নতুন 'xkeysib-...' কী-টি বসান
+RESEND_API_KEY = "YOUR_NEW_RESEND_API_KEY_HERE"  # এখানে আপনার নতুন 're_...' কী-টি বসান
+SENDER_EMAIL = "rakib03x@gmail.com"               # আপনার ভেরিফাইড Brevo প্রেরক ইমেইল
+
+
+# ================= REQUEST MODELS =================
 class SignupRequest(BaseModel):
     action: str  # 'send_otp' অথবা 'verify_and_register'
     email: str
@@ -42,17 +53,13 @@ def hash_password(password: str) -> str:
 def send_via_brevo_api(recipient: str, otp: str) -> bool:
     url = "https://api.brevo.com/v3/smtp/email"
     
-    # Vercel-এর Environment Variable থেকে কি রিড করবে, না থাকলে ড্যাশবোর্ডের নতুন API v3 Key ব্যবহার করবে
-    # দয়া করে Vercel Settings-এ BREVO_API_KEY নামের ভেরিয়েবলে আপনার নতুন 'xkeysib-...' কী-টি পেস্ট করে দিন
-    api_key = os.environ.get("BREVO_API_KEY", "xsmtpsib-353d161fe87c9a2398286c939abd2d88eded89aa076c0b476a489151d2928745-r81KzrWee8rBANwz")
-    
     headers = {
         "accept": "application/json",
-        "api-key": api_key,
+        "api-key": BREVO_API_KEY,
         "content-type": "application/json"
     }
     payload = {
-        "sender": {"name": "Block Buster Support", "email": "rakib03x@gmail.com"},
+        "sender": {"name": "Block Buster Support", "email": SENDER_EMAIL},
         "to": [{"email": recipient}],
         "subject": "Your Block Buster OTP Verification Code",
         "htmlContent": f"""
@@ -79,10 +86,8 @@ def send_via_brevo_api(recipient: str, otp: str) -> bool:
 def send_via_resend_api(recipient: str, otp: str) -> bool:
     url = "https://api.resend.com/emails"
     
-    resend_key = os.environ.get("RESEND_API_KEY", "re_3t1FPYUa_5kzAJGgftdZx8MkEaXvUsYAP")
-    
     headers = {
-        "Authorization": f"Bearer {resend_key}",
+        "Authorization": f"Bearer {RESEND_API_KEY}",
         "Content-Type": "application/json"
     }
     payload = {
@@ -148,7 +153,7 @@ def signup_api(req: SignupRequest):
             supabase.table("email_logs").insert({"provider": provider_used, "recipient": req.email}).execute()
             return {"success": True, "message": "আপনার জিমেইলে ওটিপি কোড পাঠানো হয়েছে।"}
         else:
-            raise HTTPException(status_code=500, detail="ইমেইল পাঠাতে সমস্যা হচ্ছে। Senders বা ডোমেইন কনফিগারেশন চেক করুন।")
+            raise HTTPException(status_code=500, detail="ইমেইল পাঠাতে समस्या হচ্ছে। Senders বা ডোমেইন কনফিগারেশন চেক করুন।")
 
     elif req.action == "verify_and_register":
         if not req.otp_code or not req.password:
