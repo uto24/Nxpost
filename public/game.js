@@ -443,6 +443,66 @@ class GameScene extends Phaser.Scene {
         }
     }
 
+    // এপিআই-এর সাহায্য নিয়ে প্রথম সম্ভাব্য চালটি খুঁজে বের করে সংকেত (Hint) দিয়ে বাউন্স করানো
+    showMoveHint() {
+        if (this.isProcessing) return;
+
+        let hintMove = null;
+
+        // রো চেকিং (ডানদিকের প্রতিবেশীর সাথে সোয়াপ ট্রাই)
+        for (let r = 0; r < this.gridSize; r++) {
+            for (let c = 0; c < this.gridSize - 1; c++) {
+                if (this.checkSwapCreatesMatch(r, c, r, c + 1)) {
+                    hintMove = { t1: this.grid[r][c], t2: this.grid[r][c+1] };
+                    break;
+                }
+            }
+            if (hintMove) break;
+        }
+
+        // কলাম চেকিং (নিচের প্রতিবেশীর সাথে সোয়াপ ট্রাই)
+        if (!hintMove) {
+            for (let r = 0; r < this.gridSize - 1; r++) {
+                for (let c = 0; c < this.gridSize; c++) {
+                    if (this.checkSwapCreatesMatch(r, c, r + 1, c)) {
+                        hintMove = { t1: this.grid[r][c], t2: this.grid[r+1][c] };
+                        break;
+                    }
+                }
+                if (hintMove) break;
+            }
+        }
+
+        // যদি চাল পাওয়া যায়, তবে সেটিকে সোনারঙে বাউন্স অ্যানিমেশন করিয়ে দেখানো
+        if (hintMove) {
+            this.isProcessing = true;
+            const bg1 = hintMove.t1.getData('bg');
+            const bg2 = hintMove.t2.getData('bg');
+
+            bg1.setStrokeStyle(3, 0xffeb3b);
+            bg2.setStrokeStyle(3, 0xffeb3b);
+
+            this.spawnFloatingText(hintMove.t1.x, hintMove.t1.y, "💡 Here!", '#ffeb3b');
+
+            this.tweens.add({
+                targets: [hintMove.t1, hintMove.t2],
+                scale: 1.15, // টাইলস সামান্য বড় হবে
+                duration: 250,
+                yoyo: true,
+                repeat: 1, // দুইবার ডাবল ফ্ল্যাশ বা বাউন্স করবে
+                onComplete: () => {
+                    hintMove.t1.setScale(1);
+                    hintMove.t2.setScale(1);
+                    bg1.setStrokeStyle(2, 0x33691e);
+                    bg2.setStrokeStyle(2, 0x33691e);
+                    this.isProcessing = false;
+                }
+            });
+        } else {
+            this.spawnFloatingText(180, 200, "No moves possible!", '#FF3D00');
+        }
+    }
+
     async saveCoinsToBackend(amount) {
         if (!currentUser) return;
         try {
