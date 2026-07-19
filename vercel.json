@@ -15,5 +15,13 @@
     { "src": "/signup", "dest": "public/signup.html" },
     { "src": "/verify", "dest": "public/verify.html" },
     { "src": "/(.*)", "dest": "public/$1" }
+  ],
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        { "key": "Cache-Control", "value": "no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0" }
+      ]
+    }
   ]
 }
