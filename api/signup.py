@@ -1,11 +1,9 @@
 import os
 import re
 import random
-import smtplib
 import hashlib
+import requests  # SMTP লাইব্রেরির পরিবর্তে দ্রুত কাজ করার জন্য যুক্ত করা হয়েছে
 from datetime import datetime, timezone
-from email.mime.text import MIMEText
-from email.mime.multipart import MIMEMultipart
 
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
@@ -26,7 +24,6 @@ SUPABASE_URL = os.environ.get("SUPABASE_URL")
 SUPABASE_KEY = os.environ.get("SUPABASE_SERVICE_ROLE_KEY")
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
-# ================= REQUEST MODELS =================
 class SignupRequest(BaseModel):
     action: str  # 'send_otp' অথবা 'verify_and_register'
     email: str
@@ -36,127 +33,133 @@ class SignupRequest(BaseModel):
     referrer_id: int = None
     otp_code: str = None
 
-# ================= SECURE PASSWORD HASHING =================
 def hash_password(password: str) -> str:
     salt = "BLOCK_BUSTER_SALT_2026"
     return hashlib.sha256((password + salt).encode()).hexdigest()
 
-# ================= SMTP OTP EMAILING =================
-def send_via_brevo(recipient: str, otp: str) -> bool:
-    msg = MIMEMultipart()
-    msg['From'] = '"Block Buster Spport" <rakib03x@gmail.com>'
-    msg['To'] = recipient
-    msg['Subject'] = 'Your Block Buster OTP Verification Code'
-    html = f"""
-    <div style="font-family: sans-serif; padding: 20px; border: 1px solid #ddd; border-radius: 10px;">
-        <h2 style="color: #2E7D32;">Email Verification Code</h2>
-        <p>Use the following One-Time Password (OTP) to complete your signup process:</p>
-        <h1 style="background: #E8F5E9; padding: 10px; display: inline-block; border-radius: 5px; color: #1B5E20; letter-spacing: 2px;">{otp}</h1>
-        <p style="font-size: 11px; color: #888;">Valid for 5 minutes.</p>
-    </div>
-    """
-    msg.attach(MIMEText(html, 'html'))
+# ================= ১০০% ফাস্ট ও সিকিউর BREVO HTTP API =================
+def send_via_brevo_api(recipient: str, otp: str) -> bool:
+    url = "https://api.brevo.com/v3/smtp/email"
+    headers = {
+        "accept": "application/json",
+        "api-key": "xsmtpsib-353d161fe87c9a2398286c939abd2d88eded89aa076c0b476a489151d2928745-r81KzrWee8rBANwz",
+        "content-type": "application/json"
+    }
+    payload = {
+        "sender": {"name": "Block Buster Support", "email": "rakib03x@gmail.com"},
+        "to": [{"email": recipient}],
+        "subject": "Your Block Buster OTP Verification Code",
+        "htmlContent": f"""
+        <div style="font-family: sans-serif; padding: 20px; border: 1px solid #ddd; border-radius: 10px;">
+            <h2 style="color: #2E7D32;">Email Verification Code</h2>
+            <p>Use the following One-Time Password (OTP) to complete your signup process:</p>
+            <h1 style="background: #E8F5E9; padding: 10px; display: inline-block; border-radius: 5px; color: #1B5E20; letter-spacing: 2px;">{otp}</h1>
+            <p style="font-size: 11px; color: #888;">Valid for 5 minutes. Do not share this code.</p>
+        </div>
+        """
+    }
     try:
-        with smtplib.SMTP('smtp-relay.brevo.com', 587) as server:
-            server.starttls()
-            server.login('b28253001@smtp-brevo.com', 'xsmtpsib-353d161fe87c9a2398286c939abd2d88eded89aa076c0b476a489151d2928745-r81KzrWee8rBANwz')
-            server.sendmail('rakib03x@gmail.com', recipient, msg.as_string())
-        return True
+        response = requests.post(url, json=payload, headers=headers)
+        if response.status_code in [200, 201, 202]:
+            return True
+        else:
+            print(f"Brevo API Error: {response.status_code} - {response.text}")
+            return False
     except Exception as e:
-        print(f"Brevo SMTP Error: {e}")
+        print(f"Brevo HTTP Request Connection Error: {e}")
         return False
 
-def send_via_resend(recipient: str, otp: str) -> bool:
-    msg = MIMEMultipart()
-    msg['From'] = '"Block Buster Support" <rakib03x@gmail.com>'
-    msg['To'] = recipient
-    msg['Subject'] = 'Your Block Buster OTP Verification Code'
-    html = f"""
-    <div style="font-family: sans-serif; padding: 20px; border: 1px solid #ddd; border-radius: 10px;">
-        <h2 style="color: #2E7D32;">Email Verification Code</h2>
-        <p>Use the following One-Time Password (OTP) to complete your signup process:</p>
-        <h1 style="background: #E8F5E9; padding: 10px; display: inline-block; border-radius: 5px; color: #1B5E20; letter-spacing: 2px;">{otp}</h1>
-        <p style="font-size: 11px; color: #888;">Valid for 5 minutes.</p>
-    </div>
-    """
-    msg.attach(MIMEText(html, 'html'))
+# ================= ১০০% ফাস্ট ও সিকিউর RESEND HTTP API =================
+def send_via_resend_api(recipient: str, otp: str) -> bool:
+    url = "https://api.resend.com/emails"
+    headers = {
+        "Authorization": "Bearer re_3t1FPYUa_5kzAJGgftdZx8MkEaXvUsYAP",
+        "Content-Type": "application/json"
+    }
+    payload = {
+        "from": "onboarding@resend.dev",
+        "to": [recipient],
+        "subject": "Your Block Buster OTP Verification Code",
+        "html": f"""
+        <div style="font-family: sans-serif; padding: 20px; border: 1px solid #ddd; border-radius: 10px;">
+            <h2 style="color: #2E7D32;">Email Verification Code</h2>
+            <p>Use the following One-Time Password (OTP) to complete your signup process:</p>
+            <h1 style="background: #E8F5E9; padding: 10px; display: inline-block; border-radius: 5px; color: #1B5E20; letter-spacing: 2px;">{otp}</h1>
+            <p style="font-size: 11px; color: #888;">Valid for 5 minutes. Do not share this code.</p>
+        </div>
+        """
+    }
     try:
-        with smtplib.SMTP('smtp.resend.com', 587) as server:
-            server.starttls()
-            server.login('resend', 're_3t1FPYUa_5kzAJGgftdZx8MkEaXvUsYAP')
-            server.sendmail('onboarding@resend.dev', recipient, msg.as_string())
-        return True
+        response = requests.post(url, json=payload, headers=headers)
+        if response.status_code in [200, 201, 202]:
+            return True
+        else:
+            print(f"Resend API Error: {response.status_code} - {response.text}")
+            return False
     except Exception as e:
-        print(f"Resend SMTP Error: {e}")
+        print(f"Resend HTTP Request Connection Error: {e}")
         return False
 
-# ================= SIGNUP HANDLER ROUTE =================
+# ================= SIGNUP ROUTE HANDLER =================
 @app.post("/api/signup")
 def signup_api(req: SignupRequest):
-    # জিমেইল ফরম্যাট চেক
     if not re.match(r"^[a-zA-Z0-9._%+-]+@gmail\.com$", req.email):
         raise HTTPException(status_code=400, detail="শুধুমাত্র @gmail.com ইমেইল গ্রহণযোগ্য।")
 
-    # কন্ডিশন ১: ওটিপি সেন্ড প্রসেস
     if req.action == "send_otp":
-        # ডিভাইস চেক
         device_res = supabase.table("users").select("id").eq("device_fingerprint", req.device_fingerprint).execute()
         if device_res.data:
             raise HTTPException(status_code=400, detail="এই ডিভাইসে ইতিমধ্যেই একটি অ্যাকাউন্ট খোলা রয়েছে।")
 
-        # ইমেইল চেক
         email_res = supabase.table("users").select("id").eq("email", req.email).execute()
         if email_res.data:
             raise HTTPException(status_code=400, detail="এই ইমেইলে ইতিমধ্যেই একটি অ্যাকাউন্ট রয়েছে।")
 
-        # ওটিপি জেনারেট (৬ ডিজিট)
         otp = str(random.randint(100000, 999999))
         
-        # পূর্বের ওটিপি ডাটা ক্লিন ও নতুন এন্ট্রি সেভ
         supabase.table("otp_codes").delete().eq("email", req.email).execute()
         supabase.table("otp_codes").insert({"email": req.email, "otp_code": otp}).execute()
 
-        # SMTP দৈনিক লিমিট ও ফেইলওভার চেক
         today_start = datetime.now(timezone.utc).replace(hour=0, minute=0, second=0, microsecond=0).isoformat()
         b_count = supabase.table("email_logs").select("id", count="exact").eq("provider", "Brevo").gte("sent_at", today_start).execute().count or 0
         r_count = supabase.table("email_logs").select("id", count="exact").eq("provider", "Resend").gte("sent_at", today_start).execute().count or 0
 
         sent = False
         provider_used = ""
+        
+        # প্রথমে Brevo API দিয়ে ট্রাই করা হচ্ছে (এটি যেকোনো জিমেইলে ওটিপি সেন্ড করতে পারবে)
         if b_count < 290:
-            if send_via_brevo(req.email, otp):
+            if send_via_brevo_api(req.email, otp):
                 sent, provider_used = True, "Brevo"
-        elif r_count < 98:
-            if send_via_resend(req.email, otp):
+        
+        # Brevo শেষ হয়ে গেলে বা ফেইল করলে Resend API দিয়ে ট্রাই করা হবে
+        # (মনে রাখবেন: Resend-এর onboarding@resend.dev দিয়ে শুধুমাত্র আপনার নিজের Resend রেজিস্ট্রেশন করা ইমেইলেই ওটিপি যাবে)
+        if not sent and r_count < 98:
+            if send_via_resend_api(req.email, otp):
                 sent, provider_used = True, "Resend"
 
         if sent:
             supabase.table("email_logs").insert({"provider": provider_used, "recipient": req.email}).execute()
-            return {"success": True, "message": "আপনার ইমেইলে ওটিপি কোড পাঠানো হয়েছে।"}
+            return {"success": True, "message": "আপনার জিমেইলে ওটিপি কোড পাঠানো হয়েছে।"}
         else:
-            raise HTTPException(status_code=500, detail="সার্ভার থেকে ইমেইল পাঠাতে সমস্যা হচ্ছে। পরে চেষ্টা করুন।")
+            raise HTTPException(status_code=500, detail="ইমেইল পাঠাতে সমস্যা হচ্ছে। Senders বা ডোমেইন কনফিগারেশন চেক করুন।")
 
-    # কন্ডিশন ২: ওটিপি ভেরিফিকেশন ও অ্যাকাউন্ট তৈরি
     elif req.action == "verify_and_register":
         if not req.otp_code or not req.password:
             raise HTTPException(status_code=400, detail="পাসওয়ার্ড এবং ওটিপি কোড আবশ্যক।")
 
-        # ডাটাবেজে ওটিপি কোড মেলানো
-        otp_res = supabase.table("otp_codes").select("*").eq("email", req.email).eq("otp_code", req.otp_code).execute()
+        now = datetime.now(timezone.utc).isoformat()
+        otp_res = supabase.table("otp_codes").select("*").eq("email", req.email).eq("otp_code", req.otp_code).gt("expires_at", now).execute()
+        
         if not otp_res.data:
-            raise HTTPException(status_code=400, detail="ভুল ওটিপি কোড। দয়া করে আবার চেক করুন।")
+            raise HTTPException(status_code=400, detail="ভুল ওটিপি অথবা ওটিপির ৫ মিনিটের মেয়াদ শেষ হয়ে গেছে।")
 
-        # সফল হলে ওটিপি ডাটা মুছে ফেলা
         supabase.table("otp_codes").delete().eq("email", req.email).execute()
 
-        # নিকনেম জেনারেট (User30795512)
         random_num = random.randint(10000000, 99999999)
         nickname = req.nickname if req.nickname else f"User{random_num}"
-
-        # পাসওয়ার্ড হ্যাশ করা
         hashed = hash_password(req.password)
 
-        # ইউজার ডেটাবেজে সেভ
         user_data = {
             "email": req.email,
             "nickname": nickname,
@@ -173,7 +176,6 @@ def signup_api(req: SignupRequest):
         
         new_user = insert_res.data[0]
 
-        # রেফারেল এন্ট্রি হ্যান্ডলিং
         if req.referrer_id:
             referrer_res = supabase.table("users").select("device_fingerprint").eq("id", req.referrer_id).execute()
             if referrer_res.data:
