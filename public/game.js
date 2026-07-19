@@ -282,15 +282,19 @@ class GameScene extends Phaser.Scene {
 
     async saveCoinsToBackend(amount) {
         if (!currentUser) return;
-        const res = await fetch('/api/add-coins', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ userId: currentUser.id, coinsEarned: amount })
-        });
-        const data = await res.json();
-        if (res.ok) {
-            currentUser.coin_balance = data.newBalance;
-            updateUIBalances();
+        try {
+            const res = await fetch('/api/add-coins', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ userId: currentUser.id, coinsEarned: amount })
+            });
+            const data = await res.json();
+            if (res.ok) {
+                currentUser.coin_balance = data.newBalance;
+                updateUIBalances();
+            }
+        } catch (err) {
+            console.error("Coin save error: ", err);
         }
     }
 }
