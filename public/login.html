@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Block Buster - Login</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script>
+        // অলরেডি লগইন থাকলে গেম ড্যাশবোর্ডে রিডাইরেক্ট করবে
+        if (localStorage.getItem('blockbuster_user')) {
+            window.location.href = '/';
+        }
+    </script>
+</head>
+<body class="bg-gray-950 font-sans min-h-screen flex justify-center text-white">
+
+    <div class="w-full max-w-md bg-[#1B5E20] min-h-screen flex flex-col justify-between p-6 overflow-y-auto shadow-2xl relative">
+        <div class="text-center mt-12">
+            <h1 class="text-4xl font-black text-yellow-300 tracking-wide drop-shadow-[0_5px_5px_rgba(0,0,0,0.5)]">BLOCK BUSTER</h1>
+        </div>
+
+        <!-- Login Form Card -->
+        <div class="w-full bg-black/40 backdrop-blur-md rounded-3xl p-6 text-center space-y-4">
+            <h2 class="text-lg font-bold"><i class="fa-solid fa-user-lock mr-2 text-yellow-300"></i>Account Login</h2>
+            
+            <input id="login-email" type="email" placeholder="example@gmail.com" class="w-full p-3 rounded-2xl bg-white/10 text-white placeholder-gray-300 border border-white/20 focus:outline-none focus:ring-2 focus:ring-green-400">
+            <input id="login-password" type="password" placeholder="Password" class="w-full p-3 rounded-2xl bg-white/10 text-white placeholder-gray-300 border border-white/20 focus:outline-none focus:ring-2 focus:ring-green-400">
+
+            <button onclick="submitLogin()" class="w-full bg-[#4CAF50] hover:bg-green-600 py-3 rounded-full text-white font-extrabold text-lg shadow-lg border-b-4 border-green-700">
+                <i class="fa-solid fa-right-to-bracket mr-2"></i> Log In
+            </button>
+            
+            <p class="text-xs text-gray-400">Don't have an account? <a href="/signup" class="text-yellow-300 underline font-bold">Sign Up</a></p>
+        </div>
+
+        <p class="text-[10px] text-gray-400 text-center">Agree to <span class="underline">User Agreement</span> and <span class="underline">Privacy Policy</span></p>
+    </div>
+
+    <script>
+        async function submitLogin() {
+            const email = document.getElementById('login-email').value;
+            const password = document.getElementById('login-password').value;
+
+            if (!email || !password) {
+                return alert("ইমেইল এবং পাসওয়ার্ড আবশ্যক।");
+            }
+
+            const response = await fetch('/api/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email, password })
+            });
+
+            const data = await response.json();
+            if (response.ok) {
+                localStorage.setItem('blockbuster_user', JSON.stringify(data.user));
+                window.location.href = '/';
+            } else {
+                alert(data.detail || "লগইন ব্যর্থ হয়েছে। সঠিক তথ্য দিন।");
+            }
+        }
+    </script>
+</body>
+</html>
