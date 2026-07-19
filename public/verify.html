@@ -37,86 +37,88 @@
         <p class="text-[10px] text-gray-400 text-center">Agree to <span class="underline">User Agreement</span> and <span class="underline">Privacy Policy</span></p>
     </div>
 
-<script>
-    // ১. সাময়িক সাইন-আপ ডাটা না থাকলে রিডাইরেক্ট করবে (পেইজের একদম শুরুতে চেক)
-    if (!sessionStorage.getItem('temp_signup')) {
-        window.location.href = '/signup';
-    }
-
-    // ২. জটিল এরর ডিকোড করে দেখানোর হেল্পার ফাংশন
-    function showError(data) {
-        if (!data) return alert("ত্রুটি ঘটেছে। আবার চেষ্টা করুন।");
-        if (typeof data.detail === 'string') {
-            return alert(data.detail);
-        }
-        if (Array.isArray(data.detail)) {
-            const msgs = data.detail.map(err => {
-                const field = err.loc[err.loc.length - 1];
-                return `${field}: ${err.msg}`;
-            });
-            return alert("ভ্যালিডেশন ত্রুটি:\n" + msgs.join("\n"));
-        }
-        if (data.error) {
-            return alert(data.error);
-        }
-        alert(JSON.stringify(data));
-    }
-
-    // ৩. ওটিপি ভেরিফিকেশন ও রেজিস্ট্রেশন ফাংশন (Try-Catch ও HTML Error প্রুফ)
-    async function verifyAndRegister() {
-        const otp = document.getElementById('signup-otp').value;
-        const temp = sessionStorage.getItem('temp_signup');
-
-        if (!otp) {
-            return alert("অনুগ্রহ করে ওটিপি কোডটি লিখুন।");
-        }
-        if (!temp) {
-            window.location.href = '/signup';
-            return;
-        }
-
-        try {
-            const tempUser = JSON.parse(temp);
-
-            const response = await fetch('/api/signup', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    action: 'verify_and_register',
-                    email: tempUser.email,
-                    password: tempUser.password,
-                    device_fingerprint: tempUser.device_fingerprint,
-                    otp_code: otp,
-                    referrer_id: tempUser.referrer_id
-                })
-            });
-
-            // রেসপন্স টাইপ চেক করা (HTML এরর ক্র্যাশ প্রতিরোধ করতে)
-            const contentType = response.headers.get("content-type");
-            let data;
-            
-            if (contentType && contentType.includes("application/json")) {
-                data = await response.json();
-            } else {
-                // যদি সার্ভার থেকে HTML এরর পেজ (যেমন Vercel 502/500) আসে
-                const errorText = await response.text();
-                console.error("Non-JSON Server Error Response: ", errorText);
-                return alert("সার্ভার থেকে ত্রুটিপূর্ণ HTML রেসপন্স এসেছে। দয়া করে Vercel Logs চেক করুন।");
+    <script>
+        // জটিল এরর ডিকোড করে দেখানোর হেল্পার ফাংশন
+        function showError(data) {
+            if (!data) return alert("ত্রুটি ঘটেছে। আবার চেষ্টা করুন।");
+            if (typeof data.detail === 'string') {
+                return alert(data.detail);
             }
-
-            if (response.ok) {
-                alert("নিবন্ধন সফল হয়েছে!");
-                sessionStorage.removeItem('temp_signup'); // সাময়িক সেশন ক্লিন
-                localStorage.setItem('blockbuster_user', JSON.stringify(data.user)); // মেইন সেশন সেভ
-                window.location.href = '/'; // গেম ড্যাশবোর্ডে প্রবেশ
-            } else {
-                showError(data);
+            if (Array.isArray(data.detail)) {
+                const msgs = data.detail.map(err => {
+                    const field = err.loc[err.loc.length - 1];
+                    return `${field}: ${err.msg}`;
+                });
+                return alert("ভ্যালিডেশন ত্রুটি:\n" + msgs.join("\n"));
             }
-            
-        } catch (err) {
-            // নেটওয়ার্ক ফেইল বা জাভাস্ক্রিপ্ট এরর ক্যাচ করা
-            console.error("Network or JS Exception: ", err);
-            alert("নেটওয়ার্ক সংযোগে সমস্যা হয়েছে অথবা সার্ভার ডাউন আছে।");
+            if (data.error) {
+                return alert(data.error);
+            }
+            alert(JSON.stringify(data));
         }
-    }
-</script>
+
+        // ওটিপি ভেরিফিকেশন ও রেজিস্ট্রেশন ফাংশন (১০০% ক্র্যাশ প্রুফ)
+        async function verifyAndRegister() {
+            try {
+                // ইনপুট এলিমেন্টটি সঠিকভাবে এক্সিস্ট করে কি না তা আগে চেক করা হচ্ছে
+                const otpInput = document.getElementById('signup-otp');
+                if (!otpInput) {
+                    return alert("সিস্টেম ত্রুটি: ওটিপি ইনপুট ফিল্ডটি খুঁজে পাওয়া যায়নি!");
+                }
+                
+                const otp = otpInput.value.trim();
+                if (!otp) {
+                    return alert("অনুগ্রহ করে ওটিপি কোডটি লিখুন।");
+                }
+
+                const temp = sessionStorage.getItem('temp_signup');
+                if (!temp) {
+                    window.location.href = '/signup';
+                    return;
+                }
+
+                const tempUser = JSON.parse(temp);
+
+                const response = await fetch('/api/signup', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        action: 'verify_and_register',
+                        email: tempUser.email,
+                        password: tempUser.password,
+                        device_fingerprint: tempUser.device_fingerprint,
+                        otp_code: otp,
+                        referrer_id: tempUser.referrer_id
+                    })
+                });
+
+                // রেসপন্স টাইপ চেক করা (HTML এরর ক্র্যাশ প্রতিরোধ করতে)
+                const contentType = response.headers.get("content-type");
+                let data;
+                
+                if (contentType && contentType.includes("application/json")) {
+                    data = await response.json();
+                } else {
+                    const errorText = await response.text();
+                    console.error("Non-JSON Server Error Response: ", errorText);
+                    return alert("সার্ভার থেকে ত্রুটিপূর্ণ HTML রেসপন্স এসেছে। দয়া করে Vercel Logs চেক করুন।");
+                }
+
+                if (response.ok) {
+                    alert("নিবন্ধন সফল হয়েছে!");
+                    sessionStorage.removeItem('temp_signup'); // সাময়িক সেশন ক্লিন
+                    localStorage.setItem('blockbuster_user', JSON.stringify(data.user)); // মেইন সেশন সেভ
+                    window.location.href = '/'; // গেম ড্যাশবোর্ডে প্রবেশ
+                } else {
+                    showError(data);
+                }
+                
+            } catch (err) {
+                // যেকোনো ধরনের রানটাইম এরর বা ক্র্যাশ ক্যাচ করা
+                console.error("Network or JS Exception: ", err);
+                alert("ভুল বা ক্র্যাশ: " + err.message);
+            }
+        }
+    </script>
+</body>
+</html>
