@@ -18,9 +18,10 @@
         var currentUser = JSON.parse(localStorage.getItem('blockbuster_user'));
     </script>
 </head>
-<body class="bg-gray-950 font-sans min-h-screen flex justify-center text-white">
+<body class="bg-gray-950 font-sans min-h-screen flex justify-center text-white overflow-hidden">
 
-    <div class="w-full max-w-md bg-[#1B5E20] min-h-screen flex flex-col justify-between p-4 relative overflow-hidden">
+    <!-- dynamic viewport height (h-[100dvh]) ব্যবহার করে গেম ফ্রেম স্ক্রিনে লক করা হয়েছে -->
+    <div class="w-full max-w-md bg-[#1B5E20] h-[100dvh] flex flex-col justify-between p-4 relative overflow-hidden shadow-2xl">
         
         <!-- Game Page Header -->
         <header class="flex justify-between items-center bg-[#1B5E20] p-2 shrink-0 border-b border-green-800">
@@ -36,10 +37,9 @@
 
         <!-- Main Game Area -->
         <div class="flex-grow flex flex-col justify-center py-2">
-            <div class="flex justify-between items-center text-xs bg-black/20 p-2 rounded-xl mb-3">
+            <div class="flex justify-between items-center text-xs bg-black/20 p-2 rounded-xl mb-3 shrink-0">
                 <div>🏆 High Score: <span id="high-score">0</span></div>
                 
-                <!-- HTML level Hint button -->
                 <button onclick="triggerGameHint()" class="bg-yellow-500 hover:bg-yellow-600 text-black px-3 py-1 rounded-full font-extrabold text-[11px] shadow flex items-center space-x-1">
                     <i class="fa-solid fa-lightbulb"></i> <span>Get Hint</span>
                 </button>
@@ -47,11 +47,11 @@
                 <div class="text-right text-yellow-300">⭐ Score: <span id="current-score">0</span></div>
             </div>
 
-            <!-- Phaser Canvas Game Container -->
-            <div id="block-game-container" class="mx-auto border-4 border-green-900 rounded-2xl overflow-hidden bg-[#0c3c14]"></div>
+            <!-- Phaser Canvas Game Container (বোর্ডের সাইজ রেসপন্সিভ করা হয়েছে) -->
+            <div id="block-game-container" class="w-full max-w-[330px] h-[370px] mx-auto border-4 border-green-900 rounded-2xl overflow-hidden bg-[#0c3c14]"></div>
         </div>
 
-        <p class="text-[10px] text-green-200 text-center mb-2">ফলের ওপর ট্যাপ করে পাশাপাশি বা উপর-নিচ সোয়াপ (Swap) করে ৩টি মিলান! প্রতিটি ম্যাচে আপনার ওয়ালেটে কয়েন যুক্ত হবে।</p>
+        <p class="text-[10px] text-green-200 text-center mb-2 shrink-0">ফলের ওপর ট্যাপ করে পাশাপাশি বা উপর-নিচ সোয়াপ (Swap) করে ৩টি মিলান! প্রতিটি ম্যাচে আপনার ওয়ালেটে কয়েন যুক্ত হবে।</p>
     </div>
 
     <script>
