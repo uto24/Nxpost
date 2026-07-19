@@ -83,7 +83,7 @@ class GameScene extends Phaser.Scene {
         });
     }
 
-    // টেনে ফল সোয়াপ (Drag and Swipe swapping) করার গ্লোবাল ইভেন্ট
+    // টেনে ফল সোয়াপ (Drag and Swipe swapping) করার গলোবাল ইভেন্ট
     setupDragEvents() {
         this.input.on('pointerup', () => {
             this.isDragging = false;
@@ -94,7 +94,7 @@ class GameScene extends Phaser.Scene {
             if (this.isDragging && this.activeDragTile && !this.isProcessing) {
                 const dx = pointer.x - this.dragStartX;
                 const dy = pointer.y - this.dragStartY;
-                const threshold = 30; // সোয়াইপ লিমিট ৩০ পিক্সেল করা হয়েছে (যাতে সাধারণ ক্লিকে সোয়াইপ ট্রিগার না হয়)
+                const threshold = 30; // সোয়াইপ লিমিট ৩০ পিক্সেল করা হয়েছে
                 
                 if (Math.abs(dx) > threshold || Math.abs(dy) > threshold) {
                     this.isDragging = false; // একাধিক সোয়াইপ প্রতিরোধে ড্র্যাগিং অফ
@@ -130,13 +130,15 @@ class GameScene extends Phaser.Scene {
 
         if (!this.selectedTile) {
             this.selectedTile = tile;
-            tile.setData('bg').setStrokeStyle(3, 0xffeb3b); // হলুদ সিলেকশন বর্ডার
+            // বাগ ফিক্স: setData পরিবর্তন করে সঠিক getData('bg') ব্যবহার করা হয়েছে
+            tile.getData('bg').setStrokeStyle(3, 0xffeb3b); // হলুদ সিলেকশন বর্ডার
         } else {
             const tile1 = this.selectedTile;
             const tile2 = tile;
             this.selectedTile = null;
 
-            tile1.setData('bg').setStrokeStyle(2, 0x33691e); // আগের সবুজ বর্ডার
+            // বাগ ফিক্স: এখানেও getData('bg') ফিক্স করা হয়েছে
+            tile1.getData('bg').setStrokeStyle(2, 0x33691e); // আগের সবুজ বর্ডার
 
             const dist = Math.abs(tile1.getData('row') - tile2.getData('row')) + Math.abs(tile1.getData('col') - tile2.getData('col'));
             if (dist === 1) {
