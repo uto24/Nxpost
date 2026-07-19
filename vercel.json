@@ -1,11 +1,19 @@
 {
   "version": 2,
   "builds": [
-    { "src": "api/index.py", "use": "@vercel/python" },
+    { "src": "api/*.py", "use": "@vercel/python" },
     { "src": "public/**", "use": "@vercel/static" }
   ],
   "routes": [
-    { "src": "/api/(.*)", "dest": "api/index.py" },
+    { "src": "/api/signup", "dest": "api/signup.py" },
+    { "src": "/api/login", "dest": "api/login.py" },
+    { "src": "/api/add-coins", "dest": "api/add-coins.py" },
+    { "src": "/api/heartbeat", "dest": "api/heartbeat.py" },
+    { "src": "/api/referrals", "dest": "api/referrals.py" },
+    { "src": "/api/cron/verify", "dest": "api/cron_verify.py" },
+    { "src": "/login", "dest": "public/login.html" },
+    { "src": "/signup", "dest": "public/signup.html" },
+    { "src": "/verify", "dest": "public/verify.html" },
     { "src": "/(.*)", "dest": "public/$1" }
   ]
 }
