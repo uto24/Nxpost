@@ -19,12 +19,11 @@
             <h1 class="text-4xl font-black text-yellow-300 tracking-wide drop-shadow-[0_5px_5px_rgba(0,0,0,0.5)]">BLOCK BUSTER</h1>
         </div>
 
-        <!-- Verification Form Card -->
         <div class="w-full bg-black/40 backdrop-blur-md rounded-3xl p-6 text-center space-y-4">
             <h2 class="text-lg font-bold"><i class="fa-solid fa-envelope-open-text mr-2 text-yellow-300"></i>Email Verification</h2>
             <p class="text-xs text-green-300">আপনার জিমেলে একটি ৬-ডিজিটের ওটিপি কোড পাঠানো হয়েছে। সেটি নিচে লিখুন:</p>
             
-            <input id="signup-otp" type="text" placeholder="Enter 6-Digit OTP" class="w-full p-3 rounded-2xl bg-white/10 text-white placeholder-gray-300 border border-white/20 text-center text-lg tracking-widest focus:outline-none focus:ring-2 focus:ring-green-400">
+            <input id="signup-otp" type="text" placeholder="Enter 6-Digit OTP" class="w-full p-3 rounded-2xl bg-white/10 text-white placeholder-gray-300 border border-white/20 text-center text-lg tracking-widest focus:outline-none">
             
             <button onclick="verifyAndRegister()" class="w-full bg-[#4CAF50] hover:bg-green-600 py-3 rounded-full text-white font-extrabold text-lg shadow-lg border-b-4 border-green-700">
                 <i class="fa-solid fa-circle-check mr-2"></i> Verify & Register
@@ -35,6 +34,24 @@
     </div>
 
     <script>
+        function showError(data) {
+            if (!data) return alert("ত্রুটি ঘটেছে। আবার চেষ্টা করুন।");
+            if (typeof data.detail === 'string') {
+                return alert(data.detail);
+            }
+            if (Array.isArray(data.detail)) {
+                const msgs = data.detail.map(err => {
+                    const field = err.loc[err.loc.length - 1];
+                    return `${field}: ${err.msg}`;
+                });
+                return alert("ভ্যালিডেশন ত্রুটি:\n" + msgs.join("\n"));
+            }
+            if (data.error) {
+                return alert(data.error);
+            }
+            alert(JSON.stringify(data));
+        }
+
         async function verifyAndRegister() {
             const otp = document.getElementById('signup-otp').value;
             const temp = sessionStorage.getItem('temp_signup');
@@ -69,7 +86,7 @@
                 localStorage.setItem('blockbuster_user', JSON.stringify(data.user));
                 window.location.href = '/';
             } else {
-                alert(data.detail || "ভুল ওটিপি কোড।");
+                showError(data);
             }
         }
     </script>
