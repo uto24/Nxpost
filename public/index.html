@@ -8,18 +8,19 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- FontAwesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- PWA Manifest Link --><!-- PWA Manifest & Global Service Worker Registration -->
-<link rel="manifest" href="/manifest.json">
-<script>
-    if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('/sw.js')
-            .then(() => console.log("PWA Service Worker Registered!"))
-            .catch(err => console.log("SW Registration failed: ", err));
-    }
-</script>
+    <!-- PWA Manifest Link -->
+    <link rel="manifest" href="/manifest.json">
     <script>
         if (!localStorage.getItem('blockbuster_user')) {
             window.location.href = '/login';
+        }
+    </script>
+    <!-- PWA Global Service Worker Registration -->
+    <script>
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('/sw.js')
+                .then(() => console.log("PWA Service Worker Registered!"))
+                .catch(err => console.log("SW Registration failed: ", err));
         }
     </script>
 </head>
@@ -64,10 +65,15 @@
                     </div>
                 </div>
 
-                <!-- 🎮 BIG PLAY GAME BUTTON (লাল-সবুজ আকর্ষনীয় গেম প্লে বাটন) -->
+                <!-- 🎮 BIG PLAY GAME BUTTON -->
                 <a href="/game" class="block w-full bg-gradient-to-r from-yellow-500 to-green-500 hover:from-yellow-600 hover:to-green-600 text-center py-5 rounded-3xl font-black text-2xl text-white shadow-2xl border-b-4 border-green-800 transform active:scale-95 transition-transform duration-100">
                     <i class="fa-solid fa-gamepad mr-2 animate-bounce"></i> PLAY GAME 🎮
                 </a>
+
+                <!-- 📥 PWA Manual Install Button (ডিফল্টভাবে হাইড থাকবে, ব্রাউজার ইনস্টল সাপোর্ট করলে অটো শো হবে) -->
+                <button id="pwa-install-btn" class="hidden w-full bg-blue-600 hover:bg-blue-700 text-center py-4 rounded-3xl font-black text-lg text-white shadow-2xl border-b-4 border-blue-800 transform active:scale-95 transition-transform duration-100 flex items-center justify-center space-x-2">
+                    <i class="fa-solid fa-download animate-bounce mr-2"></i> <span>Download Game App</span>
+                </button>
 
                 <!-- Help Center Section -->
                 <div class="divide-y divide-green-900/50 bg-black/20 rounded-2xl border border-green-900/50">
